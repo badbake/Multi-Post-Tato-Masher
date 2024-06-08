@@ -102,7 +102,7 @@ function Run-Instance {
     $provingResponse = '"state": "PROVING"'
 
     # Log for service.exe
-    $serviceLogFileName = "$instanceName_serviceLog.txt"
+    $serviceLogFileName = "$instanceName_serviceLog$((Get-Date).ToString('yyyyMMdd')).txt"
     $serviceLogFilePath = Join-Path -Path $logDirectory -ChildPath $serviceLogFileName
 
     # Extract port number from the address argument
