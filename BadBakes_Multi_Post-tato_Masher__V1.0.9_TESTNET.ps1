@@ -258,37 +258,41 @@ function Calculate-NextTriggerTime {
         $nextTriggerDateTimeLocal = $initialTriggerDateTimeLocal
     }
 
-    # Log the next trigger date and time
-    Log-Message "Next trigger date and time: $nextTriggerDateTimeLocal"
     # Return the next trigger date and time
     return $nextTriggerDateTimeLocal
 }
 
 # Function to update the console with remaining time
 function Update-ConsoleWithRemainingTime {
+    param (
+        [string]$timestamp
+    )
+    
     while ($true) {
         $nextTriggerTime = Calculate-NextTriggerTime
         $timeDifference = $nextTriggerTime - (Get-Date)
 
-        # Calculate remaining time in days, hours, and minutes
+        # Calculate remaining time in days, hours, minutes, and seconds
         $remainingDays = [Math]::Floor($timeDifference.TotalDays)
         $remainingHours = $timeDifference.Hours
         $remainingMinutes = $timeDifference.Minutes
+        $remainingSeconds = $timeDifference.Seconds
 
-        # Display rounded Days:Hours:Minutes format
-        $formattedRemainingTime = "{0:D2}:{1:D2}:{2:D2}" -f $remainingDays, $remainingHours, $remainingMinutes
+        # Format the remaining time
+        $formattedRemainingTime = '{0}:{1:00}:{2:00}' -f ($remainingDays*24 + $timeDifference.Hours), $timeDifference.Minutes, $timeDifference.Seconds
 
         # Update console with the remaining time
-        Write-Host "Remaining time until next trigger: $formattedRemainingTime" -NoNewline
-        Start-Sleep -Seconds 10  # Update every 10 seconds
-        Write-Host "`r" -NoNewline  # Move cursor back to the beginning of the line
+        Write-Host -NoNewline "`rSleep time Remaining: $formattedRemainingTime"
+        Start-Sleep -Seconds 1  # Update every second
     }
 }
 
+
 # Start a background job to update the console with remaining time
 $consoleUpdateJob = Start-Job -ScriptBlock {
-    Update-ConsoleWithRemainingTime
+    Update-ConsoleWithRemainingTime -timestamp $timestamp
 }
+
 
 # Function to pause the console update job
 function Pause-ConsoleUpdateJob {
@@ -306,7 +310,10 @@ function Wait-ForTrigger {
         $nextTriggerTime = Calculate-NextTriggerTime
         $timeDifference = $nextTriggerTime - (Get-Date)
 
+		# Log the next trigger date and time
+		Log-Message "Next trigger date and time: $nextTriggerTime"
         Log-Message "Sleeping until PoEt Cycle Gap... $($timeDifference.ToString())"
+		Update-ConsoleWithRemainingTime
         if ($timeDifference.TotalSeconds -gt 0) {
             Start-Sleep -Seconds $timeDifference.TotalSeconds
         }

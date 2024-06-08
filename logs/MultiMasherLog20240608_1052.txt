@@ -1,0 +1,4 @@
+2024-06-08 10:52:41 - [INFO] - Next trigger date and time: 06/08/2024 18:59:00
+2024-06-08 10:52:41 - [INFO] - Sleeping until PoEt Cycle Gap... 08:06:18.8220508
+2024-06-08 10:52:41 - [INFO] - Sleep time Remaining: 
+2024-06-08 10:52:51 - [INFO] - Sleep time Remaining: 
