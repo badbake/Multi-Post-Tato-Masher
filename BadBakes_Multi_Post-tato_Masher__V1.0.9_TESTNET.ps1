@@ -286,9 +286,22 @@ $consoleUpdateJob = Start-Job -ScriptBlock {
     Update-ConsoleWithRemainingTime
 }
 
+# Function to pause the console update job
+function Pause-ConsoleUpdateJob {
+    $consoleUpdateJob | Stop-Job
+}
+
+# Function to resume the console update job
+function Resume-ConsoleUpdateJob {
+    $consoleUpdateJob | Start-Job -ScriptBlock { Update-ConsoleWithRemainingTime }
+}
+
 # Function to wait for the trigger command
 function Wait-ForTrigger {
     while ($true) {
+        # Pause console update job before running instances
+        Pause-ConsoleUpdateJob
+
         $nextTriggerTime = Calculate-NextTriggerTime
         $timeDifference = $nextTriggerTime - (Get-Date)
 
@@ -297,10 +310,13 @@ function Wait-ForTrigger {
             Start-Sleep -Seconds $timeDifference.TotalSeconds
         }
 
+        # Run instances
         Run-AllInstances
+
+        # Resume console update job after running instances
+        Resume-ConsoleUpdateJob
     }
 }
 
 # Main entry point
 Wait-ForTrigger
-
