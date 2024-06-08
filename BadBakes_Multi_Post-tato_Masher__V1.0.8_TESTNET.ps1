@@ -7,7 +7,7 @@
     File Name: BadBakes_Multi_Post-tato_Masher__V1.0.8_TESTNET.ps1
     Author: badbake
     Version: 1.0.8
-    Last Updated: 2024-06-05
+    Last Updated: 2024-06-08
 #>
 
 # Set the window title
@@ -21,7 +21,7 @@ if (-not (Test-Path -Path $logDirectory)) {
     New-Item -ItemType Directory -Path $logDirectory
 }
 
-$logFileName = "log$((Get-Date).ToString('yyyyMMdd_HHmmss')).txt"
+$logFileName = "MultiMasherLog$((Get-Date).ToString('yyyyMMdd_HHmmss')).txt"
 $logFilePath = Join-Path -Path $logDirectory -ChildPath $logFileName
 
 # Define configurations for each set of POST Data. 
@@ -184,7 +184,7 @@ function Stop-Gracefully {
             Log-Message "Process did not exit gracefully within the timeout period. Forcing termination."
             $process.Kill()
         } else {
-            Log-Message "Process exited gracefully."
+            Log-Message "Instance ended successfully."
         }
     } catch {
         Log-Message "An error occurred while attempting to stop the process gracefully: $_"
