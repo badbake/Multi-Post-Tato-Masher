@@ -312,7 +312,7 @@ function Wait-ForTrigger {
 
 		# Log the next trigger date and time
 		Log-Message "Next trigger date and time: $nextTriggerTime"
-        Log-Message "Sleeping until PoEt Cycle Gap... $($timeDifference.ToString())"
+        Log-Message "Sleeping until PoEt Cycle Gap..."
 		Update-ConsoleWithRemainingTime
         if ($timeDifference.TotalSeconds -gt 0) {
             Start-Sleep -Seconds $timeDifference.TotalSeconds
