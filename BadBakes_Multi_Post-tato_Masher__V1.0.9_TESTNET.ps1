@@ -282,7 +282,7 @@ function Update-ConsoleWithRemainingTime {
         $formattedRemainingTime = '{0}:{1:00}:{2:00}' -f ($remainingDays*24 + $timeDifference.Hours), $timeDifference.Minutes, $timeDifference.Seconds
 
         # Update console with the remaining time
-        Write-Host -NoNewline "`rSleep time Remaining: $formattedRemainingTime"
+        Write-Host -NoNewline "`r                             - Time Remaining: $formattedRemainingTime"
         Start-Sleep -Seconds 1  # Update every second
     }
 }
@@ -307,24 +307,32 @@ function Resume-ConsoleUpdateJob {
 # Function to wait for the trigger command
 function Wait-ForTrigger {
     while ($true) {
+        # Calculate the next trigger time
         $nextTriggerTime = Calculate-NextTriggerTime
+        
+        # Calculate the time difference between current time and the next trigger time
         $timeDifference = $nextTriggerTime - (Get-Date)
 
-		# Log the next trigger date and time
-		Log-Message "Next trigger date and time: $nextTriggerTime"
+        # Log the next trigger date and time
+        Log-Message "Next trigger date and time: $nextTriggerTime"
         Log-Message "Sleeping until PoEt Cycle Gap..."
-		Update-ConsoleWithRemainingTime
+        
+        # Update console with remaining time
+        Update-ConsoleWithRemainingTime -timestamp $nextTriggerTime
+
+        # Sleep until the next trigger time
         if ($timeDifference.TotalSeconds -gt 0) {
             Start-Sleep -Seconds $timeDifference.TotalSeconds
         }
 
         # Run all instances sequentially
         Run-AllInstances
-        
+
         # Resume console update job after running instances
         Resume-ConsoleUpdateJob
     }
 }
+
 
 # Main entry point
 # Start waiting for the trigger command
