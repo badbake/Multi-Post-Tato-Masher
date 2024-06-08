@@ -55,7 +55,7 @@ function Load-Configurations {
     }
 }
 
-$configFilePath = ".\instances_config.ps1"
+$configFilePath = ".\Masher_config.ps1"
 $instances = Load-Configurations -configFilePath $configFilePath
 
 # Function to run an instance
