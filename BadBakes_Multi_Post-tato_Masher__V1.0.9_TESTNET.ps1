@@ -222,6 +222,10 @@ function Wait-ForServiceStopped {
 
 # Function to run all instances sequentially
 function Run-AllInstances {
+    # Pause console update job before running instances
+    Pause-ConsoleUpdateJob
+    
+    # Run instances
     foreach ($instanceName in $instances.Keys) {
         $instance = $instances[$instanceName]
         Run-Instance -instanceName $instanceName -arguments $instance.Arguments
@@ -288,7 +292,7 @@ $consoleUpdateJob = Start-Job -ScriptBlock {
 
 # Function to pause the console update job
 function Pause-ConsoleUpdateJob {
-    $consoleUpdateJob | Receive-Job
+    $consoleUpdateJob | Stop-Job
 }
 
 # Function to resume the console update job
@@ -307,12 +311,9 @@ function Wait-ForTrigger {
             Start-Sleep -Seconds $timeDifference.TotalSeconds
         }
 
-        # Pause console update job before running instances
-        Pause-ConsoleUpdateJob
-
-        # Run instances
+        # Run all instances sequentially
         Run-AllInstances
-
+        
         # Resume console update job after running instances
         Resume-ConsoleUpdateJob
     }
@@ -321,4 +322,3 @@ function Wait-ForTrigger {
 # Main entry point
 # Start waiting for the trigger command
 Wait-ForTrigger
-
