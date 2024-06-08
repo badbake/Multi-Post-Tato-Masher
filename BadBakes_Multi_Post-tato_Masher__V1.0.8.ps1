@@ -24,17 +24,59 @@ if (-not (Test-Path -Path $logDirectory)) {
 $logFileName = "log$((Get-Date).ToString('yyyyMMdd_HHmmss')).txt"
 $logFilePath = Join-Path -Path $logDirectory -ChildPath $logFileName
 
-# Define instance configurations for each set of Post Data
+# Define configurations for each set of POST Data. 
 $instances = @{
-    "Post1" = @{
-        Arguments = @("--address=http://localhost:9094", "--dir=../PostData1", "--operator-address=127.0.0.1:50051", "--threads=1", "--nonces=128", "--randomx-mode=fast")
+    "Post1" = @{									#Name of each instance must match the identity.key associaited with that POST data set. (Example - Post1 for use with Post1.key.) 
+        Arguments = @(
+            "--address=http://localhost:9094",		#Node's gRPC address. Ensure it matches the node's grpc-post-listener config option.
+            "--dir=./Post1",						#Post Data Directory, Set for each different set of Post Data.
+            "--operator-address=127.0.0.1:50051",	#Operator API
+            "--threads=1",							#Proving Options based on your hardware
+            "--nonces=128",							#Proving Options based on your hardware
+            "--randomx-mode=fast"					#Proving Options based on your hardware
+        )
     }
-    "Post2" = @{
-        Arguments = @("--address=http://localhost:9094", "--dir=../PostData2", "--operator-address=127.0.0.1:50051", "--threads=1", "--nonces=128", "--randomx-mode=fast")
+    "Post2" = @{									#Example - Post2 name for use with Post2.key
+        Arguments = @(
+            "--address=http://localhost:9094",
+            "--dir=./Post2",						#Set for Post DataDirectory 2
+            "--operator-address=127.0.0.1:50052",
+            "--threads=1",
+            "--nonces=128",
+            "--randomx-mode=fast"
+        )
     }
-    "Post3" = @{
-        Arguments = @("--address=http://localhost:9094", "--dir=../PostData3", "--operator-address=127.0.0.1:50051", "--threads=1", "--nonces=128", "--randomx-mode=fast")
+    "Post3" = @{									#Example - Post2 name for use with Post2.key
+        Arguments = @(
+            "--address=http://localhost:9094",
+            "--dir=./Post3",						#Set for Post DataDirectory 2
+            "--operator-address=127.0.0.1:50053",
+            "--threads=1",
+            "--nonces=128",
+            "--randomx-mode=fast"
+        )
     }
+    "Post4" = @{									#Example - Post2 name for use with Post2.key
+        Arguments = @(
+            "--address=http://localhost:9094",
+            "--dir=./Post4",						#Set for Post DataDirectory 2
+            "--operator-address=127.0.0.1:50054",
+            "--threads=1",
+            "--nonces=128",
+            "--randomx-mode=fast"
+        )
+    }
+    "Post5" = @{									#Example - Post2 name for use with Post2.key
+        Arguments = @(
+            "--address=http://localhost:9094",
+            "--dir=./Post5",						#Set for Post DataDirectory 2
+            "--operator-address=127.0.0.1:50055",
+            "--threads=1",
+            "--nonces=128",
+            "--randomx-mode=fast"
+        )
+    }
+    # Add more Posts with names and arguments for all Post Services needed.
 }
 
 # Function to log messages with timestamp
@@ -60,7 +102,7 @@ function Run-Instance {
     $provingResponse = '"state": "PROVING"'
 
     # Log for service.exe
-    $serviceLogFileName = "($instanceName)_serviceLog.txt"
+    $serviceLogFileName = "$instanceName_serviceLog$((Get-Date).ToString('yyyyMMdd')).txt"
     $serviceLogFilePath = Join-Path -Path $logDirectory -ChildPath $serviceLogFileName
 
     # Extract port number from the address argument
@@ -83,31 +125,45 @@ function Run-Instance {
 
     $previousState = ""
 
-    # Initial gRPC check
-    $response = & "$grpcurl" --plaintext -d '{}' "localhost:$port" spacemesh.v1.PostInfoService.PostStates 2>&1
-    Log-Message $response
 
     do {
-        Start-Sleep -Seconds 300
+        Start-Sleep -Seconds 30
 
         $response = & "$grpcurl" --plaintext -d '{}' "localhost:$port" spacemesh.v1.PostInfoService.PostStates 2>&1
-        Log-Message $response
 
-        if ($response -like "*$provingResponse*" -and $previousState -ne "PROVING") {
-            Log-Message "PostService '$instanceName' is in the PROVING state."
+        $provingFound = $false
+        $idleFound = $false
+
+        # Check each state in the response
+        if ($response -match '"states": \[.*?\]') {
+            $jsonResponse = $response | ConvertFrom-Json
+            foreach ($state in $jsonResponse.states) {
+                if ($state.name -eq $instanceName) {
+                    if ($state.state -eq "PROVING") {
+                        $provingFound = $true
+                    } elseif ($state.state -eq "IDLE") {
+                        $idleFound = $true
+                    }
+                }
+            }
+        }
+
+        if ($provingFound -and $previousState -ne "PROVING") {
+            Log-Message "PostService '$instanceName' is PROVING."
             $provingStateReached = $true
             $previousState = "PROVING"
-        } elseif ($response -like "*$provingResponse*" -and $previousState -eq "PROVING") {
-            Log-Message "PostService '$instanceName' continues to be in the PROVING state."
-        } elseif ($response -like "*$idleResponse*" -and $previousState -ne "IDLE" -and -not $provingStateReached) {
+        } elseif ($provingFound -and $previousState -eq "PROVING") {
+            Log-Message "PostService '$instanceName' is still PROVING."
+        } elseif ($idleFound -and $previousState -ne "IDLE" -and -not $provingStateReached) {
             Log-Message "PostService '$instanceName' is in the IDLE state."
             $previousState = "IDLE"
-        } elseif ($response -like "*$idleResponse*" -and $previousState -eq "IDLE") {
+        } elseif ($idleFound -and $previousState -eq "IDLE") {
             Log-Message "PostService '$instanceName' continues to be in the IDLE state."
-        } elseif ($response -like "*$idleResponse*" -and $provingStateReached) {
-            Log-Message "PostService '$instanceName' has completed PROVING and is now in the IDLE state. Initiating graceful shutdown."
+        } elseif ($idleFound -and $provingStateReached) {
+            Log-Message "PostService '$instanceName' has completed PROVING and is now in the IDLE state. Initiating shutdown."
             Stop-Gracefully -process $serviceProcess
-            Remove-Item -Path $serviceLogFilePath
+            $previousState = " "
+            $provingStateReached = $false
             return
         }
     } while ($true)
