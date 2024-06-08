@@ -6,7 +6,7 @@
 .NOTES
     File Name: BadBakes_Multi_Post-tato_Masher__V1.0.8_TESTNET.ps1
     Author: badbake
-    Version: 1.0.8
+    Version: 1.0.9
     Last Updated: 2024-06-08
 #>
 
