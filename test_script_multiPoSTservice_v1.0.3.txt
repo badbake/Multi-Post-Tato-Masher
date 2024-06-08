@@ -1,0 +1,180 @@
+# Define user-customizable parameters
+
+# Specify the log file directory and path
+$logDirectory = ".\Logs"
+$logFileName = "log$((Get-Date).ToString('yyyyMMdd_HHmmss')).txt"
+$logFilePath = Join-Path -Path $logDirectory -ChildPath $logFileName
+
+# Define instance configurations
+$instances = @{
+    "Post1" = @{
+        Arguments = @(
+            "--address=http://localhost:9094",
+            "--dir=../data1",
+            "--operator-address=127.0.0.1:50051",
+            "--threads=1",
+            "--nonces=128",
+            "--randomx-mode=fast"
+        )
+    }
+    "Post2" = @{
+        Arguments = @(
+            "--address=http://localhost:9095",
+            "--dir=../data2",
+            "--operator-address=127.0.0.1:50052",
+            "--threads=1",
+            "--nonces=128",
+            "--randomx-mode=fast"
+        )
+    }
+    "Post3" = @{
+        Arguments = @(
+            "--address=http://localhost:9096",
+            "--dir=../data3",
+            "--operator-address=127.0.0.1:50053",
+            "--threads=1",
+            "--nonces=128",
+            "--randomx-mode=fast"
+        )
+    }
+    # Add more Posts with names and arguments for the service as needed
+}
+
+# End of user-customizable parameters
+
+
+# Define a function to run an instance
+function RunInstance {
+    param (
+        [string]$instanceName,
+        [string[]]$arguments
+    )
+	
+
+    # Define the expected responses for grpcurl
+    $idleResponse = '"state": "IDLE"'
+    $provingResponse = '"state": "PROVING"'
+
+    # Extract operator port number from operator address
+    $operatorAddress = ($arguments -like "--operator-address=*")[0]
+    $operatorPort = $operatorAddress.Split(":")[1]
+
+    # Construct grpcurl command for the instance
+    $grpcUrlCommand = ".\grpcurl.exe --plaintext -d '{}' localhost:$operatorPort spacemesh.v1.PostInfoService.PostStates"
+
+    # Start the service.exe process with the current set of arguments and name
+    $serviceProcess = Start-Process -FilePath ".\service.exe" -ArgumentList $arguments -NoNewWindow -PassThru -Name $instanceName | Out-File -Append -FilePath $logFilePath
+	
+	# Write a message indicating that service.exe for the instance has started
+    Write-Host "$instanceName has started service.exe"
+	
+	# Write a message indicating that service.exe for the instance has started to the log file
+    "Service.exe for instance '$instanceName' has started." | Out-File -Append -FilePath $logFilePath
+
+    # Flag to track whether the instance has entered the "PROVING" state
+    $provingStateReached = $false
+	
+	# Flag to track the previous state
+    $previousState = ""
+
+    do {
+        # Use the specific grpcurl.exe command to check the status of service.exe
+        $response = & $grpcUrlCommand
+		
+		# Log the response to the log file
+        $response | Out-File -Append -FilePath $logFilePath
+
+        # Check if response indicates service is in the "PROVING" state
+        if ($response -like "*$provingResponse*" -and $previousState -ne "PROVING") {
+            Write-Host "PostService '$instanceName' is in the PROVING state." | Out-File -Append -FilePath $logFilePath
+            $provingStateReached = $true
+			$previousState = "PROVING"
+            return  # Exit the loop and continue with the instance
+        }
+
+        # Check if response indicates service is in the "IDLE" state
+        if ($response -like "*$idleResponse*" -and $provingStateReached -eq $false -and $previousState -ne "IDLE") {
+            Write-Host "PostService '$instanceName' is in the IDLE state."| Out-File -Append -FilePath $logFilePath
+			$previousState = "IDLE"
+        }
+        elseif ($response -like "*$idleResponse*" -and $provingStateReached -eq $true) {
+            Write-Host "PostService '$instanceName' is in the IDLE state. Stopping service."| Out-File -Append -FilePath $logFilePath
+            # Stop the service.exe process
+            Stop-Process -Name $instanceName
+            return  # Exit the function
+        }
+
+        # Sleep for a short duration before the next attempt (optional)
+        Start-Sleep -Seconds 5  # Adjust the duration as needed
+
+    } while ($true)  # Infinite loop
+}
+
+# Define a function to run all instances sequentially
+function RunAllInstances {
+    # Loop through the instances
+    foreach ($instanceName in $instances.Keys) {
+        $instance = $instances[$instanceName]
+        $arguments = $instance.Arguments
+
+        # Call RunInstance function for each instance
+        RunInstance -instanceName $instanceName -arguments $arguments
+    }
+
+    # Output a message indicating that all instances have completed
+    Write-Host "All PostServices have completed."| Out-File -Append -FilePath $logFilePath
+	
+    # Get the next trigger time based on the user's local time zone
+    $nextTriggerTime = CalculateNextTriggerTime
+
+    # Display the next trigger date and time to the user
+    Write-Host "Next trigger date and time: $nextTriggerTime"| Out-File -Append -FilePath $logFilePath
+}
+
+# Specify the trigger date and time in UTC
+$triggerDateTimeUtc = Get-Date -Year 2024 -Month 5 -Day 12 -Hour 20 -Minute 0 -Second 0 -Millisecond 0
+
+# Define a function to calculate the next trigger time based on the user's local time zone
+function CalculateNextTriggerTime {
+    # Get the current date and time in the user's local time zone
+	Write-Host "Getting Local Time"| Out-File -Append -FilePath $logFilePath
+    $currentDateTimeLocal = Get-Date
+
+    # Calculate the difference between the current local time and the trigger time
+	Write-Host "Calculating time to next Cycle Gap"| Out-File -Append -FilePath $logFilePath
+    $timeDifference = New-TimeSpan -Start $currentDateTimeLocal -End $triggerDateTimeUtc
+
+    # If the trigger time has passed for this cycle, adjust it to the next cycle
+    if ($timeDifference -lt [TimeSpan]::Zero) {
+        $timeDifference = $timeDifference.Add([TimeSpan]::FromDays(14))
+    }
+
+    # Calculate the next trigger time based on the adjusted time difference
+    $nextTriggerTime = $currentDateTimeLocal.Add($timeDifference)
+    return $nextTriggerTime| Out-File -Append -FilePath $logFilePath
+}
+
+# Define a function to wait for the trigger command
+function WaitForTrigger {
+    # Status message: Waiting for trigger command
+    Write-Host "Waiting for trigger command..."| Out-File -Append -FilePath $logFilePath
+
+    # Get the next trigger time based on the user's local time zone
+    $nextTriggerTime = CalculateNextTriggerTime
+
+    # Calculate the time difference between the current date and time and the next trigger time
+    $timeDifference = New-TimeSpan -Start (Get-Date) -End $nextTriggerTime
+
+    # Wait for the calculated time difference
+    Start-Sleep -Seconds $timeDifference.TotalSeconds
+
+    # Trigger the script to run all instances
+    while ($true) {
+        RunAllInstances
+        # Wait for two weeks before running the instances again
+        Start-Sleep -Seconds (2 * 7 * 24 * 60 * 60)  # 2 weeks
+    }
+}
+
+# Trigger the script to wait for the trigger command
+WaitForTrigger
