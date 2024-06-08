@@ -15,9 +15,9 @@ $WindowTitle = "Multi Post-tato Masher TESTNET"
 $host.ui.RawUI.WindowTitle = $WindowTitle
 
 # Define user-customizable parameters
-$logDirectory = ".\Logs"						#Can be changed to customize log directory
-$serviceExecutable = ".\service.exe"			#Set location of 'service.exe'. (Defaults to directory script is run from)
-$grpcurlExecutable = ".\grpcurl.exe"			#Set location of 'grpcurl.exe'. (Defaults to directory script is run from)
+$logDirectory = ".\Logs"						#Can be changed to customize log directory (Defaults is directory script is run from)
+$serviceExecutable = ".\service.exe"			#Set location of 'service.exe'. (Defaults is directory script is run from)
+$grpcurlExecutable = ".\grpcurl.exe"			#Set location of 'grpcurl.exe'. (Defaults is directory script is run from)
 
 if (-not (Test-Path -Path $logDirectory)) {
     New-Item -ItemType Directory -Path $logDirectory
