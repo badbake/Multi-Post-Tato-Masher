@@ -26,16 +26,60 @@ if (-not (Test-Path -Path $logDirectory)) {
 $logFileName = "MultiMasherLog$((Get-Date).ToString('yyyyMMdd_HHmm')).txt"
 $logFilePath = Join-Path -Path $logDirectory -ChildPath $logFileName
 
-# Function to log messages with timestamp and error levels
+# Function to log messages with timestamp and log level
 function Log-Message {
     param (
         [string]$message,
-        [string]$level = "INFO"
+        [string]$level = "INFO"  # Default level is INFO
     )
+
     $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
-    $logMessage = "$timestamp [$level] - $message"
-    Write-Host $logMessage
+    $logMessage = "$timestamp - [$level] - $message"
+
+    # Write the log message to the console with colors
+    Colorize-Logs -message $message -level $level -timestamp $timestamp
+
+    # Also write to the log file without colors
     $logMessage | Out-File -Append -FilePath $logFilePath
+}
+
+# Function to display colorized logs in the console
+function Colorize-Logs {
+    param (
+        [string]$message,
+        [string]$level,
+        [string]$timestamp
+    )
+
+    switch ($level) {
+        "INFO" {
+            $timestampColor = "Green"
+            $levelColor = "Cyan"
+            $messageColor = "Gray"
+        }
+        "WARNING" {
+            $timestampColor = "Green"
+            $levelColor = "Yellow"
+            $messageColor = "Gray"
+        }
+        "ERROR" {
+            $timestampColor = "Green"
+            $levelColor = "Red"
+            $messageColor = "Gray"
+        }
+        default {
+            $timestampColor = "Green"
+            $levelColor = "White"
+            $messageColor = "Gray"
+        }
+    }
+
+    # Print the log message with color
+    Write-Host -NoNewline -ForegroundColor $timestampColor $timestamp
+    Write-Host -NoNewline " - "
+    Write-Host -NoNewline -ForegroundColor $levelColor "[$level]"
+    Write-Host -NoNewline " - "
+    Write-Host -ForegroundColor $messageColor $message
 }
 
 # Load instance configurations from an external PowerShell script
