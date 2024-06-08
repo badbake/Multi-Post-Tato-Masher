@@ -260,13 +260,39 @@ function Calculate-NextTriggerTime {
     return $nextTriggerDateTimeLocal
 }
 
+# Function to update the console with remaining time
+function Update-ConsoleWithRemainingTime {
+    while ($true) {
+        $nextTriggerTime = Calculate-NextTriggerTime
+        $timeDifference = $nextTriggerTime - (Get-Date)
+
+        # Calculate remaining time in days, hours, and minutes
+        $remainingDays = [Math]::Floor($timeDifference.TotalDays)
+        $remainingHours = $timeDifference.Hours
+        $remainingMinutes = $timeDifference.Minutes
+
+        # Display rounded Days:Hours:Minutes format
+        $formattedRemainingTime = "{0:D2}:{1:D2}:{2:D2}" -f $remainingDays, $remainingHours, $remainingMinutes
+
+        # Update console with the remaining time
+        Write-Host "Remaining time until next trigger: $formattedRemainingTime" -NoNewline
+        Start-Sleep -Seconds 10  # Update every 10 seconds
+        Write-Host "`r" -NoNewline  # Move cursor back to the beginning of the line
+    }
+}
+
+# Start a background job to update the console with remaining time
+$consoleUpdateJob = Start-Job -ScriptBlock {
+    Update-ConsoleWithRemainingTime
+}
+
 # Function to wait for the trigger command
 function Wait-ForTrigger {
     while ($true) {
         $nextTriggerTime = Calculate-NextTriggerTime
         $timeDifference = $nextTriggerTime - (Get-Date)
 
-        Log-Message "Sleeping until PoEt Cycle Gap... $timeDifference"
+        Log-Message "Sleeping until PoEt Cycle Gap... $($timeDifference.ToString())"
         if ($timeDifference.TotalSeconds -gt 0) {
             Start-Sleep -Seconds $timeDifference.TotalSeconds
         }
@@ -277,3 +303,4 @@ function Wait-ForTrigger {
 
 # Main entry point
 Wait-ForTrigger
+
