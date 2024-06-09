@@ -298,7 +298,10 @@ function Run-AllInstances {
         # Check each instance for PROVING state
         foreach ($instanceName in $instances.Keys) {
             $instance = $instances[$instanceName]
-
+		
+				# Display Message
+				Log-Message "Checking State of '$instanceName'." "INFO"
+		
             try {
                 # Extract port number from the address argument
                 $addressArgument = ($instance.Arguments -like "--address=*")[0]
