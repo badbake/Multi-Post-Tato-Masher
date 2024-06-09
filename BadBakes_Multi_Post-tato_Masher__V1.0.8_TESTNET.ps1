@@ -102,7 +102,7 @@ function Run-Instance {
     $provingResponse = '"state": "PROVING"'
 
     # Log for service.exe
-    $serviceLogFileName = "$instanceName_serviceLog$((Get-Date).ToString('yyyyMMdd')).txt"
+	$serviceLogFileName = "${instanceName}_service$((Get-Date).ToString('yyyyMMdd')).txt"
     $serviceLogFilePath = Join-Path -Path $logDirectory -ChildPath $serviceLogFileName
 
     # Extract port number from the address argument
@@ -124,16 +124,15 @@ function Run-Instance {
     }
 
     $previousState = ""
+	$provingFound = $false
+    $idleFound = $false
 
 
     do {
         Start-Sleep -Seconds 30
 
         $response = & "$grpcurl" --plaintext -d '{}' "localhost:$port" spacemesh.v1.PostInfoService.PostStates 2>&1
-
-        $provingFound = $false
-        $idleFound = $false
-
+		Write-Host "$response"
         # Check each state in the response
         if ($response -match '"states": \[.*?\]') {
             $jsonResponse = $response | ConvertFrom-Json
@@ -180,7 +179,7 @@ function Stop-Gracefully {
         $process.CloseMainWindow()
 
         # Wait for the process to exit gracefully
-        if (-not $process.WaitForExit(30000)) {  # Wait up to 30 seconds for graceful exit
+        if (-not $process.WaitForExit(30)) {  # Wait up to 30 seconds for graceful exit
             Log-Message "Process did not exit gracefully within the timeout period. Forcing termination."
             $process.Kill()
         } else {
@@ -265,6 +264,14 @@ function Wait-ForTrigger {
         Run-AllInstances
     }
 }
+# Function to wait for user input to trigger all instances
+function Wait-ForTriggerInput {
+    Write-Host "Press spacebar to start all instances..."
+    do {
+        $key = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown").VirtualKeyCode
+    } while ($key -ne 32)
 
+    Run-AllInstances
+}
 # Main entry point
-Wait-ForTrigger
+Wait-ForTriggerInput

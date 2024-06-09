@@ -1,30 +1,83 @@
 <#
 .SYNOPSIS
-    Script for orchestrating multiple instances of PoST Proving 'service.exe', sequentially, based on cycle gap timing.
+    Script for orchestrating multiple PoST Proving service instances, sequentially, based on cycle gap timing.
 .DESCRIPTION
     This script runs different instances of the PoST Proving "service.exe" sequentially, waits for each to complete before starting the next, and handles Cycle Gap timing.
 .NOTES
     File Name: BadBakes_Multi_Post-tato_Masher__V1.0.8_TESTNET.ps1
     Author: badbake
-    Version: 1.0.9
+    Version: 1.0.8
     Last Updated: 2024-06-08
 #>
 
 # Set the window title
 $WindowTitle = "Multi Post-tato Masher TESTNET"
 $host.ui.RawUI.WindowTitle = $WindowTitle
+$grpcurl = Join-Path -Path $PSScriptRoot -ChildPath "grpcurl.exe"
 
 # Define user-customizable parameters
-$logDirectory = ".\Logs"						#Can be changed to customize log directory (Defaults is directory script is run from)
-$serviceExecutable = ".\service.exe"			#Set location of 'service.exe'. (Defaults is directory script is run from)
-$grpcurlExecutable = ".\grpcurl.exe"			#Set location of 'grpcurl.exe'. (Defaults is directory script is run from)
-
+$logDirectory = ".\Logs"
 if (-not (Test-Path -Path $logDirectory)) {
     New-Item -ItemType Directory -Path $logDirectory
 }
 
-$logFileName = "MultiMasherLog$((Get-Date).ToString('yyyyMMdd_HHmm')).txt"
+$logFileName = "MultiMasherLog$((Get-Date).ToString('yyyyMMdd_HHmmss')).txt"
 $logFilePath = Join-Path -Path $logDirectory -ChildPath $logFileName
+
+# Define configurations for each set of POST Data. 
+$instances = @{
+    "Post1" = @{									#Name of each instance must match the identity.key associaited with that POST data set. (Example - Post1 for use with Post1.key.) 
+        Arguments = @(
+            "--address=http://localhost:9094",		#Node's gRPC address. Ensure it matches the node's grpc-post-listener config option.
+            "--dir=./Post1",						#Post Data Directory, Set for each different set of Post Data.
+            "--operator-address=127.0.0.1:50051",	#Operator API
+            "--threads=1",							#Proving Options based on your hardware
+            "--nonces=128",							#Proving Options based on your hardware
+            "--randomx-mode=fast"					#Proving Options based on your hardware
+        )
+    }
+    "Post2" = @{									#Example - Post2 name for use with Post2.key
+        Arguments = @(
+            "--address=http://localhost:9094",
+            "--dir=./Post2",						#Set for Post DataDirectory 2
+            "--operator-address=127.0.0.1:50052",
+            "--threads=1",
+            "--nonces=128",
+            "--randomx-mode=fast"
+        )
+    }
+    "Post3" = @{									#Example - Post2 name for use with Post2.key
+        Arguments = @(
+            "--address=http://localhost:9094",
+            "--dir=./Post3",						#Set for Post DataDirectory 2
+            "--operator-address=127.0.0.1:50053",
+            "--threads=1",
+            "--nonces=128",
+            "--randomx-mode=fast"
+        )
+    }
+    "Post4" = @{									#Example - Post2 name for use with Post2.key
+        Arguments = @(
+            "--address=http://localhost:9094",
+            "--dir=./Post4",						#Set for Post DataDirectory 2
+            "--operator-address=127.0.0.1:50054",
+            "--threads=1",
+            "--nonces=128",
+            "--randomx-mode=fast"
+        )
+    }
+    "Post5" = @{									#Example - Post2 name for use with Post2.key
+        Arguments = @(
+            "--address=http://localhost:9094",
+            "--dir=./Post5",						#Set for Post DataDirectory 2
+            "--operator-address=127.0.0.1:50055",
+            "--threads=1",
+            "--nonces=128",
+            "--randomx-mode=fast"
+        )
+    }
+    # Add more Posts with names and arguments for all Post Services needed.
+}
 
 # Function to log messages with timestamp and log level
 function Log-Message {
@@ -62,6 +115,11 @@ function Colorize-Logs {
             $levelColor = "Yellow"
             $messageColor = "Gray"
         }
+        "DEBUG" {
+            $timestampColor = "Green"
+            $levelColor = "Yellow"
+            $messageColor = "Gray"
+        }
         "ERROR" {
             $timestampColor = "Green"
             $levelColor = "Red"
@@ -82,27 +140,6 @@ function Colorize-Logs {
     Write-Host -ForegroundColor $messageColor $message
 }
 
-# Load instance configurations from an external PowerShell script
-function Load-Configurations {
-    param (
-        [string]$configFilePath
-    )
-    try {
-        if (-not (Test-Path -Path $configFilePath)) {
-            throw "Configuration file not found at path: $configFilePath"
-        }
-        . $configFilePath
-        return $instances
-    } catch {
-        Log-Message "Error loading configurations: $_" "ERROR"
-        throw $_
-    }
-}
-
-$configFilePath = ".\Masher_config.ps1"
-$instances = Load-Configurations -configFilePath $configFilePath
-
-# Function to run an instance
 function Run-Instance {
     param (
         [string]$instanceName,
@@ -114,7 +151,7 @@ function Run-Instance {
     $provingResponse = '"state": "PROVING"'
 
     # Log for service.exe
-    $serviceLogFileName = "$instanceName_serviceLog$((Get-Date).ToString('yyyyMMdd')).txt"
+	$serviceLogFileName = "${instanceName}_service$((Get-Date).ToString('yyyyMMdd')).txt"
     $serviceLogFilePath = Join-Path -Path $logDirectory -ChildPath $serviceLogFileName
 
     # Extract port number from the address argument
@@ -125,58 +162,86 @@ function Run-Instance {
     $provingStateReached = $false
 
     Log-Message "$instanceName is starting service.exe"
-    $serviceProcess = Start-Process -FilePath $serviceExecutable -ArgumentList $arguments -NoNewWindow -PassThru -RedirectStandardError $serviceLogFilePath
+    $serviceProcess = Start-Process -FilePath ".\service.exe" -ArgumentList $arguments -NoNewWindow -PassThru -RedirectStandardError $serviceLogFilePath
 
     # Check if service process started successfully
     if ($serviceProcess -ne $null -and (Get-Process -Id $serviceProcess.Id -ErrorAction SilentlyContinue)) {
         Log-Message "$instanceName has successfully started Post Service."
     } else {
-        Log-Message "$instanceName failed to start Post Service." "ERROR"
+        Log-Message "$instanceName failed to start Post Service."
         return
     }
 
     $previousState = ""
+	$provingFound = $false
+    $idleFound = $false
 
     do {
         Start-Sleep -Seconds 30
 
-        $response = & "$grpcurlExecutable" --plaintext -d '{}' "localhost:$port" spacemesh.v1.PostInfoService.PostStates 2>&1
+        $response = & "$grpcurl" --plaintext -d '{}' "localhost:$port" spacemesh.v1.PostInfoService.PostStates 2>&1
 
-        $provingFound = $false
-        $idleFound = $false
+# Check if the response is empty or if there's an error
+if (-not $response) {
+    Log-Message "ERROR: No response received from gRPC call."
+    return
+}
 
-        # Check each state in the response
-        if ($response -match '"states": \[.*?\]') {
-            $jsonResponse = $response | ConvertFrom-Json
-            foreach ($state in $jsonResponse.states) {
-                if ($state.name -eq $instanceName) {
-                    if ($state.state -eq "PROVING") {
-                        $provingFound = $true
-                    } elseif ($state.state -eq "IDLE") {
-                        $idleFound = $true
-                    }
-                }
-            }
+# Convert response to JSON
+try {
+    $jsonResponse = $response | ConvertFrom-Json
+} catch {
+    Log-Message "ERROR: Failed to convert response to JSON: $_"
+    return
+}
+
+# Check if JSON conversion was successful
+if (-not $jsonResponse) {
+    Log-Message "ERROR: Failed to convert response to JSON."
+    return
+}
+
+# Now continue with processing the JSON response
+foreach ($state in $jsonResponse.states) {
+    Log-Message "DEBUG: Found instance '$($state.name)' with state '$($state.state)'."
+    if ($state.name -like "$instanceName*") {  # Check if the name contains the expected instance name
+        Log-Message "DEBUG: Instance name '$instanceName' matched in the response."
+        if ($state.state -eq "PROVING") {
+            $provingFound = $true
+            Log-Message "DEBUG: Proving found for '$instanceName'."
+        } elseif ($state.state -eq "IDLE") {
+            $idleFound = $true
+            Log-Message "DEBUG: Idle found for '$instanceName'."
         }
-
+    }
+}
+		
         if ($provingFound -and $previousState -ne "PROVING") {
+            Log-Message "DEBUG: Previous state is not PROVING for '$instanceName'."
             Log-Message "PostService '$instanceName' is PROVING."
             $provingStateReached = $true
             $previousState = "PROVING"
         } elseif ($provingFound -and $previousState -eq "PROVING") {
+            Log-Message "DEBUG: Previous state is PROVING for '$instanceName'."
             Log-Message "PostService '$instanceName' is still PROVING."
         } elseif ($idleFound -and $previousState -ne "IDLE" -and -not $provingStateReached) {
+            Log-Message "DEBUG: Previous state is not IDLE for '$instanceName'."
             Log-Message "PostService '$instanceName' is in the IDLE state."
             $previousState = "IDLE"
         } elseif ($idleFound -and $previousState -eq "IDLE") {
+            Log-Message "DEBUG: Previous state is IDLE for '$instanceName'."
             Log-Message "PostService '$instanceName' continues to be in the IDLE state."
         } elseif ($idleFound -and $provingStateReached) {
+            Log-Message "DEBUG: Idle found and proving state reached for '$instanceName'."
             Log-Message "PostService '$instanceName' has completed PROVING and is now in the IDLE state. Initiating shutdown."
             Stop-Gracefully -process $serviceProcess
+            $previousState = " "
+            $provingStateReached = $false
             return
         }
     } while ($true)
 }
+
 
 # Function to initiate a graceful shutdown of the process
 function Stop-Gracefully {
@@ -189,14 +254,14 @@ function Stop-Gracefully {
         $process.CloseMainWindow()
 
         # Wait for the process to exit gracefully
-        if (-not $process.WaitForExit(30000)) {  # Wait up to 30 seconds for graceful exit
-            Log-Message "Process did not exit gracefully within the timeout period. Forcing termination." "WARNING"
+        if (-not $process.WaitForExit(30)) {  # Wait up to 30 seconds for graceful exit
+            Log-Message "Process did not exit gracefully within the timeout period. Forcing termination."
             $process.Kill()
         } else {
             Log-Message "Instance ended successfully."
         }
     } catch {
-        Log-Message "An error occurred while attempting to stop the process gracefully: $_" "ERROR"
+        Log-Message "An error occurred while attempting to stop the process gracefully: $_"
     }
 }
 
@@ -222,10 +287,6 @@ function Wait-ForServiceStopped {
 
 # Function to run all instances sequentially
 function Run-AllInstances {
-    # Pause console update job before running instances
-    Pause-ConsoleUpdateJob
-    
-    # Run instances
     foreach ($instanceName in $instances.Keys) {
         $instance = $instances[$instanceName]
         Run-Instance -instanceName $instanceName -arguments $instance.Arguments
@@ -238,7 +299,7 @@ function Run-AllInstances {
 # Function to calculate the next trigger time based on the user's local time zone
 function Calculate-NextTriggerTime {
     # Define the initial trigger date and time in UTC
-    $initialTriggerDateTimeUtc = [DateTime]::new(2024, 6, 6, 22, 59, 0)		#testnet12
+    $initialTriggerDateTimeUtc = [DateTime]::new(2024, 6, 6, 22, 59, 0)
 
     # Convert the initial trigger time to the local time zone
     $initialTriggerDateTimeLocal = $initialTriggerDateTimeUtc.ToLocalTime()
@@ -258,81 +319,26 @@ function Calculate-NextTriggerTime {
         $nextTriggerDateTimeLocal = $initialTriggerDateTimeLocal
     }
 
+    # Log the next trigger date and time
+    Log-Message "Next trigger date and time: $nextTriggerDateTimeLocal"
     # Return the next trigger date and time
     return $nextTriggerDateTimeLocal
-}
-
-# Function to update the console with remaining time
-function Update-ConsoleWithRemainingTime {
-    param (
-        [string]$timestamp
-    )
-    
-    while ($true) {
-        $nextTriggerTime = Calculate-NextTriggerTime
-        $timeDifference = $nextTriggerTime - (Get-Date)
-
-        # Calculate remaining time in days, hours, minutes, and seconds
-        $remainingDays = [Math]::Floor($timeDifference.TotalDays)
-        $remainingHours = $timeDifference.Hours
-        $remainingMinutes = $timeDifference.Minutes
-        $remainingSeconds = $timeDifference.Seconds
-
-        # Format the remaining time
-        $formattedRemainingTime = '{0}:{1:00}:{2:00}' -f ($remainingDays*24 + $timeDifference.Hours), $timeDifference.Minutes, $timeDifference.Seconds
-
-        # Update console with the remaining time
-        Write-Host -NoNewline "`r                             - Time Remaining: $formattedRemainingTime"
-        Start-Sleep -Seconds 1  # Update every second
-    }
-}
-
-
-# Start a background job to update the console with remaining time
-$consoleUpdateJob = Start-Job -ScriptBlock {
-    Update-ConsoleWithRemainingTime -timestamp $timestamp
-}
-
-
-# Function to pause the console update job
-function Pause-ConsoleUpdateJob {
-    $consoleUpdateJob | Stop-Job
-}
-
-# Function to resume the console update job
-function Resume-ConsoleUpdateJob {
-    $consoleUpdateJob | Start-Job
 }
 
 # Function to wait for the trigger command
 function Wait-ForTrigger {
     while ($true) {
-        # Calculate the next trigger time
         $nextTriggerTime = Calculate-NextTriggerTime
-        
-        # Calculate the time difference between current time and the next trigger time
         $timeDifference = $nextTriggerTime - (Get-Date)
 
-        # Log the next trigger date and time
-        Log-Message "Next trigger date and time: $nextTriggerTime"
-        Log-Message "Sleeping until PoEt Cycle Gap..."
-        
-        # Update console with remaining time
-        Update-ConsoleWithRemainingTime -timestamp $nextTriggerTime
-
-        # Sleep until the next trigger time
+        Log-Message "Sleeping until PoEt Cycle Gap... $timeDifference"
         if ($timeDifference.TotalSeconds -gt 0) {
             Start-Sleep -Seconds $timeDifference.TotalSeconds
         }
 
-        # Run all instances sequentially
         Run-AllInstances
-
-        # Resume console update job after running instances
-        Resume-ConsoleUpdateJob
     }
 }
-
 # Function to wait for user input to trigger all instances
 function Wait-ForTriggerInput {
     Write-Host "Press spacebar to start all instances..."
@@ -342,7 +348,5 @@ function Wait-ForTriggerInput {
 
     Run-AllInstances
 }
-
 # Main entry point
-# Start waiting for the trigger command
 Wait-ForTriggerInput
