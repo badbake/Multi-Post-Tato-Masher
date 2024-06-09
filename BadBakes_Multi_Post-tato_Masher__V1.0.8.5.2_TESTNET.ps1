@@ -226,17 +226,17 @@ function Run-Instance {
             $provingStateReached = $true
             $previousState = "PROVING"
         } elseif ($provingFound -and $previousState -eq "PROVING") {
-            Log-Message "PostService '$instanceName' is still PROVING." "DEBUG"
+            Log-Message "PostService '$instanceName' is still PROVING." "INFO"
         } elseif ($idleFound -and $previousState -ne "IDLE" -and -not $provingStateReached) {
             Log-Message "PostService '$instanceName' is in the IDLE state." "INFO"
             $previousState = "IDLE"
         } elseif ($idleFound -and $previousState -eq "IDLE") {
-            Log-Message "PostService '$instanceName' continues to be in the IDLE state." "DEBUG"
+            Log-Message "PostService '$instanceName' continues to be in the IDLE state." "INFO"
         } elseif ($idleFound -and $provingStateReached) {
             Log-Message "PostService '$instanceName' has completed PROVING and is now in the IDLE state. Initiating shutdown." "INFO"
             Stop-Gracefully -process $serviceProcess
-            $previousState = " "
-            $provingStateReached = $false
+            #$previousState = " "
+            #$provingStateReached = $false
             return
         }
     } while ($true)
