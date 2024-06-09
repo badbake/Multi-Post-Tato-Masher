@@ -319,7 +319,7 @@ function Calculate-NextTriggerTime {
     }
 
     # Log the next trigger date and time
-    Log-Message "Next trigger date and time: $nextTriggerDateTimeLocal"
+    Log-Message "Next Cycle Gap: $nextTriggerDateTimeLocal"
     # Return the next trigger date and time
     return $nextTriggerDateTimeLocal
 }
