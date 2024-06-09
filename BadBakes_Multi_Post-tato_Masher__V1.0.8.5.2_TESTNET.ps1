@@ -383,6 +383,8 @@ function Check-And-Run-ProvingInstances {
             Run-Instance -instanceName $instanceName -arguments $instance.Arguments
             Wait-ForServiceStopped -instanceName $instanceName
         }
+		elseif ($response - match '"state": "IDLE"') {
+			Log-Message "'$instanceName' shows IDLE." "INFO"
     }
 }
 
