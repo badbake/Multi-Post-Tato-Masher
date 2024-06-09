@@ -366,6 +366,9 @@ function Wait-ForTrigger {
 function Check-And-Run-ProvingInstances {
     foreach ($instanceName in $instances.Keys) {
         $instance = $instances[$instanceName]
+		
+		# Display Message
+		Log-Message "Checking '$instanceName' for proofing." "INFO"
 
         # Extract port number from the address argument
         $addressArgument = ($instance.Arguments -like "--address=*")[0]
