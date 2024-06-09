@@ -354,7 +354,7 @@ function Wait-ForTrigger {
         $nextTriggerTime = Calculate-NextTriggerTime
         $timeDifference = $nextTriggerTime - (Get-Date)
 
-        Log-Message "Sleeping until PoEt Cycle Gap... $timeDifference" "INFO"
+        Log-Message "Waiting until PoEt Cycle Gap..." "INFO"
 
         # Update the console with the remaining time until the next trigger
         Update-ConsoleWithRemainingTime -nextTriggerTime $nextTriggerTime
@@ -364,5 +364,48 @@ function Wait-ForTrigger {
     }
 }
 
+# Function to check for PROVING states and run corresponding instances
+function Check-And-Run-ProvingInstances {
+    foreach ($instanceName in $instances.Keys) {
+        $instance = $instances[$instanceName]
+
+        # Extract port number from the address argument
+        $port = $instance.Arguments -match "--address=http://localhost:(\d+)"
+
+        $response = & "$grpcurl" --plaintext -d '{}' "localhost:$port" spacemesh.v1.PostInfoService.PostStates 2>&1
+
+        # Check if the response is empty or if there's an error
+        if (-not $response) {
+            Log-Message "No response received from gRPC call for instance '$instanceName'." "ERROR"
+            continue
+        }
+
+        # Convert response to JSON
+        try {
+            $jsonResponse = $response | ConvertFrom-Json
+        } catch {
+            Log-Message "Failed to convert response to JSON for instance '$instanceName': $_" "ERROR"
+            continue
+        }
+
+        # Check if JSON conversion was successful
+        if (-not $jsonResponse) {
+            Log-Message "Failed to convert response to JSON for instance '$instanceName'." "ERROR"
+            continue
+        }
+
+        # Check if any instance is in PROVING state
+        foreach ($state in $jsonResponse.states) {
+            if ($state.state -eq "PROVING") {
+                Log-Message "PROVING state found for instance '$($state.name)'. Running instance before proceeding." "INFO"
+                Run-Instance -instanceName $state.name -arguments $instance.Arguments
+                Wait-ForServiceStopped -instanceName $state.name
+            }
+        }
+    }
+}
+
+
 # Main entry point
+Check-And-Run-ProvingInstances
 Wait-ForTrigger
