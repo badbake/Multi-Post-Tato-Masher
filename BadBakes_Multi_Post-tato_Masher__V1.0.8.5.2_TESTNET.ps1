@@ -21,7 +21,7 @@ if (-not (Test-Path -Path $logDirectory)) {
     New-Item -ItemType Directory -Path $logDirectory
 }
 
-$logFileName = "MultiMasherLog$((Get-Date).ToString('yyyyMMdd_HHmmss')).txt"
+$logFileName = "PostMasher$((Get-Date).ToString('MMddyyyy_HHmm')).txt"
 $logFilePath = Join-Path -Path $logDirectory -ChildPath $logFileName
 
 # Define configurations for each set of POST Data. 
