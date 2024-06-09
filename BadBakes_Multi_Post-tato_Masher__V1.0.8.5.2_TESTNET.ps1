@@ -370,23 +370,31 @@ function Check-And-Run-ProvingInstances {
 		# Display Message
 		Log-Message "Checking State of '$instanceName'." "INFO"
 
-        # Extract port number from the address argument
-        $addressArgument = ($instance.Arguments -like "--address=*")[0]
-        $port = $addressArgument.Split(":")[2].Trim("http://")
+        try {
+            # Extract port number from the address argument
+            $addressArgument = ($instance.Arguments -like "--address=*")[0]
+            $port = $addressArgument.Split(":")[2].Trim("http://")
 
-        # Perform gRPC call to check the state
-        $response = & "$grpcurl" --plaintext -d '{}' "localhost:$port" spacemesh.v1.PostInfoService.PostStates 2>&1
+            # Perform gRPC call to check the state
+            $response = & "$grpcurl" --plaintext -d '{}' "localhost:$port" spacemesh.v1.PostInfoService.PostStates 2>&1
 
-		# Check if the response contains PROVING state
-		if ($response -match '"state": "PROVING"') {
-		Log-Message "PROVING state found for instance '$instanceName'. Running instance before proceeding." "INFO"
-		Run-Instance -instanceName $instanceName -arguments $instance.Arguments
-		Wait-ForServiceStopped -instanceName $instanceName
-	}
-		elseif ($response -match '"state": "IDLE"') {
-		Log-Message "'$instanceName' shows IDLE." "INFO"
-	}
-
+            # Check if the response contains PROVING state
+            if ($response -match '"state": "PROVING"') {
+                Log-Message "PROVING state found for instance '$instanceName'. Running instance before proceeding." "INFO"
+                Run-Instance -instanceName $instanceName -arguments $instance.Arguments
+                Wait-ForServiceStopped -instanceName $instanceName
+            }
+            elseif ($response -match '"state": "IDLE"') {
+                Log-Message "'$instanceName' shows IDLE." "INFO"
+            }
+            else {
+                Log-Message "Unknown state for instance '$instanceName'." "WARNING"
+            }
+        }
+        catch {
+            Log-Message "Error occurred while checking state for instance '$instanceName': $_" "ERROR"
+        }
+    }
 }
 
 
