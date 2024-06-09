@@ -370,37 +370,17 @@ function Check-And-Run-ProvingInstances {
         $instance = $instances[$instanceName]
 
         # Extract port number from the address argument
-        $port = $instance.Arguments -match "--address=http://localhost:(\d+)"
+        $addressArgument = ($instance.Arguments -like "--address=*")[0]
+        $port = $addressArgument.Split(":")[2].Trim("http://")
 
+        # Perform gRPC call to check the state
         $response = & "$grpcurl" --plaintext -d '{}' "localhost:$port" spacemesh.v1.PostInfoService.PostStates 2>&1
 
-        # Check if the response is empty or if there's an error
-        if (-not $response) {
-            Log-Message "No response received from gRPC call for instance '$instanceName'." "ERROR"
-            continue
-        }
-
-        # Convert response to JSON
-        try {
-            $jsonResponse = $response | ConvertFrom-Json
-        } catch {
-            Log-Message "Failed to convert response to JSON for instance '$instanceName': $_" "ERROR"
-            continue
-        }
-
-        # Check if JSON conversion was successful
-        if (-not $jsonResponse) {
-            Log-Message "Failed to convert response to JSON for instance '$instanceName'." "ERROR"
-            continue
-        }
-
-        # Check if any instance is in PROVING state
-        foreach ($state in $jsonResponse.states) {
-            if ($state.state -eq "PROVING") {
-                Log-Message "PROVING state found for instance '$($state.name)'. Running instance before proceeding." "INFO"
-                Run-Instance -instanceName $state.name -arguments $instance.Arguments
-                Wait-ForServiceStopped -instanceName $state.name
-            }
+        # Check if the response contains PROVING state
+        if ($response -match '"state": "PROVING"') {
+            Log-Message "PROVING state found for instance '$instanceName'. Running instance before proceeding." "INFO"
+            Run-Instance -instanceName $instanceName -arguments $instance.Arguments
+            Wait-ForServiceStopped -instanceName $instanceName
         }
     }
 }
