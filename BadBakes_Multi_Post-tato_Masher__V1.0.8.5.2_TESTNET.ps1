@@ -408,7 +408,7 @@ function Check-And-Run-ProvingInstances {
     
     # If no instances requiring proof were found, log a message before proceeding with the timer
     if (-not $provingInstancesFound) {
-        Log-Message "No PoST Services found requiring proof, proceeding with timer till PoEt Cycle Gap" "INFO"
+        Log-Message "No PoST Services found requiring proof, proceeding with timer..." "INFO"
     }
 }
 
