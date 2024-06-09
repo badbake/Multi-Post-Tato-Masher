@@ -117,7 +117,7 @@ function Colorize-Logs {
         }
         "DEBUG" {
             $timestampColor = "Green"
-            $levelColor = "Orange"
+            $levelColor = "DarkYellow"
             $messageColor = "Gray"
         }
         "ERROR" {
@@ -157,13 +157,6 @@ function Run-Instance {
     # Log for service.exe
 	$serviceLogFileName = "${instanceName}_service$((Get-Date).ToString('yyyyMMdd')).txt"
 	$serviceLogFilePath = Join-Path -Path $logDirectory -ChildPath $serviceLogFileName
-
-	# If the service log file already exists, create it with the -Append parameter
-	if (Test-Path $serviceLogFilePath) {
-		$serviceLogFile = New-Object System.IO.StreamWriter $serviceLogFilePath, $true
-	} else {
-		$serviceLogFile = New-Object System.IO.StreamWriter $serviceLogFilePath
-	}
 
     # Extract port number from the address argument
     $addressArgument = ($arguments -like "--address=*")[0]
@@ -225,19 +218,19 @@ function Run-Instance {
             Log-Message "PostService '$instanceName' is PROVING." "INFO"
             $provingStateReached = $true
             $previousState = "PROVING"
-        } elseif ($provingFound -and $previousState -eq "PROVING") {
-            Log-Message "PostService '$instanceName' is still PROVING." "INFO"
-        } elseif ($idleFound -and $previousState -ne "IDLE" -and -not $provingStateReached) {
-            Log-Message "PostService '$instanceName' is in the IDLE state." "INFO"
-            $previousState = "IDLE"
-        } elseif ($idleFound -and $previousState -eq "IDLE") {
-            Log-Message "PostService '$instanceName' continues to be in the IDLE state." "INFO"
         } elseif ($idleFound -and $provingStateReached) {
             Log-Message "PostService '$instanceName' has completed PROVING and is now in the IDLE state. Initiating shutdown." "INFO"
             Stop-Gracefully -process $serviceProcess
             #$previousState = " "
             #$provingStateReached = $false
             return
+		} elseif ($provingFound -and $previousState -eq "PROVING") {
+            Log-Message "PostService '$instanceName' is still PROVING." "INFO"
+        } elseif ($idleFound -and $previousState -ne "IDLE" -and -not $provingStateReached) {
+            Log-Message "PostService '$instanceName' is in the IDLE state." "INFO"
+            $previousState = "IDLE"
+        } elseif ($idleFound -and $previousState -eq "IDLE") {
+            Log-Message "PostService '$instanceName' continues to be in the IDLE state." "INFO"
         }
     } while ($true)
 }
@@ -337,7 +330,7 @@ function Run-AllInstances {
 # Function to calculate the next trigger time based on the user's local time zone
 function Calculate-NextTriggerTime {
     # Define the initial trigger date and time in UTC
-    $initialTriggerDateTimeUtc = [DateTime]::new(2024, 6, 6, 22, 59, 0)
+    $initialTriggerDateTimeUtc = [DateTime]::new(2024, 6, 6, 23, 01, 0)
 
     # Convert the initial trigger time to the local time zone
     $initialTriggerDateTimeLocal = $initialTriggerDateTimeUtc.ToLocalTime()
