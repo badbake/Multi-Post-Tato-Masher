@@ -46,30 +46,30 @@ $instances = @{
             "--randomx-mode=fast"
         )
     }
-    "Post3" = @{									#Example - Post2 name for use with Post2.key
+    "Post3" = @{									#Example - Post3 name for use with Post3.key
         Arguments = @(
             "--address=http://localhost:9094",
-            "--dir=./Post3",						#Set for Post DataDirectory 2
+            "--dir=./Post3",						#Set for Post DataDirectory 3
             "--operator-address=127.0.0.1:50053",
             "--threads=1",
             "--nonces=128",
             "--randomx-mode=fast"
         )
     }
-    "Post4" = @{									#Example - Post2 name for use with Post2.key
+    "Post4" = @{									#Example - Post4 name for use with Post4.key
         Arguments = @(
             "--address=http://localhost:9094",
-            "--dir=./Post4",						#Set for Post DataDirectory 2
+            "--dir=./Post4",						#Set for Post DataDirectory 4
             "--operator-address=127.0.0.1:50054",
             "--threads=1",
             "--nonces=128",
             "--randomx-mode=fast"
         )
     }
-    "Post5" = @{									#Example - Post2 name for use with Post2.key
+    "Post5" = @{									#Example - Post5 name for use with Post5.key
         Arguments = @(
             "--address=http://localhost:9094",
-            "--dir=./Post5",						#Set for Post DataDirectory 2
+            "--dir=./Post5",						#Set for Post DataDirectory 5
             "--operator-address=127.0.0.1:50055",
             "--threads=1",
             "--nonces=128",
