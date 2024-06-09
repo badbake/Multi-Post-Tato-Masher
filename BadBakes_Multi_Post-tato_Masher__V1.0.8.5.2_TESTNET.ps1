@@ -371,6 +371,8 @@ function Wait-ForTrigger {
 
 # Function to check for PROVING states and run corresponding instances
 function Check-And-Run-ProvingInstances {
+    $provingInstancesFound = $false
+    
     foreach ($instanceName in $instances.Keys) {
         $instance = $instances[$instanceName]
 		
@@ -387,6 +389,7 @@ function Check-And-Run-ProvingInstances {
 
             # Check if the response contains PROVING state
             if ($response -match '"state": "PROVING"') {
+                $provingInstancesFound = $true
                 Log-Message "PROVING state found for instance '$instanceName'. Running instance before proceeding." "INFO"
                 Run-Instance -instanceName $instanceName -arguments $instance.Arguments
                 Wait-ForServiceStopped -instanceName $instanceName
@@ -402,7 +405,13 @@ function Check-And-Run-ProvingInstances {
             Log-Message "Error occurred while checking state for instance '$instanceName': $_" "ERROR"
         }
     }
+    
+    # If no instances requiring proof were found, log a message before proceeding with the timer
+    if (-not $provingInstancesFound) {
+        Log-Message "No PoST Services found requiring proof, proceeding with timer till PoEt Cycle Gap" "INFO"
+    }
 }
+
 
 
 # Main entry point
