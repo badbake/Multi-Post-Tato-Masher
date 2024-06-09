@@ -162,7 +162,7 @@ function Run-Instance {
     $addressArgument = ($arguments -like "--address=*")[0]
     $port = $addressArgument.Split(":")[2].Trim("http://")
 
-	#Start Service with Arguments for Iteration of Instance
+	#Start Service with Arguments for Instance
     Log-Message "$instanceName is starting service.exe" "INFO"
     $serviceProcess = Start-Process -FilePath ".\service.exe" -ArgumentList $arguments -NoNewWindow -PassThru -RedirectStandardError $serviceLogFilePath
 
