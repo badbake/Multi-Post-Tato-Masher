@@ -155,8 +155,15 @@ function Run-Instance {
     $provingStateReached = $false	
 	
     # Log for service.exe
-    $serviceLogFileName = "${instanceName}_service$((Get-Date).ToString('yyyyMMdd')).txt"
-    $serviceLogFilePath = Join-Path -Path $logDirectory -ChildPath $serviceLogFileName
+	$serviceLogFileName = "${instanceName}_service$((Get-Date).ToString('yyyyMMdd')).txt"
+	$serviceLogFilePath = Join-Path -Path $logDirectory -ChildPath $serviceLogFileName
+
+	# If the service log file already exists, create it with the -Append parameter
+	if (Test-Path $serviceLogFilePath) {
+		$serviceLogFile = New-Object System.IO.StreamWriter $serviceLogFilePath, $true
+	} else {
+		$serviceLogFile = New-Object System.IO.StreamWriter $serviceLogFilePath
+	}
 
     # Extract port number from the address argument
     $addressArgument = ($arguments -like "--address=*")[0]
