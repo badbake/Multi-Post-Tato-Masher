@@ -292,8 +292,44 @@ function Run-AllInstances {
         Wait-ForServiceStopped -instanceName $instanceName
     }
 
-    Log-Message "All PostServices have completed." "INFO"
+    # Check if any instances are still in PROVING state and run them again
+    $instancesInProvingState = $false
+    do {
+        # Check each instance for PROVING state
+        foreach ($instanceName in $instances.Keys) {
+            $instance = $instances[$instanceName]
+
+            try {
+                # Extract port number from the address argument
+                $addressArgument = ($instance.Arguments -like "--address=*")[0]
+                $port = $addressArgument.Split(":")[2].Trim("http://")
+
+                # Perform gRPC call to check the state
+                $response = & "$grpcurl" --plaintext -d '{}' "localhost:$port" spacemesh.v1.PostInfoService.PostStates 2>&1
+
+                # Check if the response contains PROVING state
+                if ($response -match '"state": "PROVING"') {
+                    $instancesInProvingState = $true
+                    Log-Message "PROVING state found for instance '$instanceName'. Running instance again." "INFO"
+                    Run-Instance -instanceName $instanceName -arguments $instance.Arguments
+                    Wait-ForServiceStopped -instanceName $instanceName
+                }
+                elseif ($response -match '"state": "IDLE"') {
+                    # Do nothing, instance is in IDLE state
+                }
+                else {
+                    Log-Message "Unknown state for instance '$instanceName'." "WARNING"
+                }
+            }
+            catch {
+                Log-Message "Error occurred while checking state for instance '$instanceName': $_" "ERROR"
+            }
+        }
+    } while ($instancesInProvingState)
+
+    Log-Message "All instances are in IDLE state." "INFO"
 }
+
 
 # Function to calculate the next trigger time based on the user's local time zone
 function Calculate-NextTriggerTime {
