@@ -117,7 +117,7 @@ function Colorize-Logs {
         }
         "DEBUG" {
             $timestampColor = "Green"
-            $levelColor = "Yellow"
+            $levelColor = "Orange"
             $messageColor = "Gray"
         }
         "ERROR" {
@@ -146,10 +146,14 @@ function Run-Instance {
         [string[]]$arguments
     )
 
-    # Expected responses
+    # Expected responses and Flags
     $idleResponse = '"state": "IDLE"'
     $provingResponse = '"state": "PROVING"'
-
+    $previousState = ""
+    $provingFound = $false
+    $idleFound = $false
+    $provingStateReached = $false	
+	
     # Log for service.exe
     $serviceLogFileName = "${instanceName}_service$((Get-Date).ToString('yyyyMMdd')).txt"
     $serviceLogFilePath = Join-Path -Path $logDirectory -ChildPath $serviceLogFileName
@@ -158,9 +162,7 @@ function Run-Instance {
     $addressArgument = ($arguments -like "--address=*")[0]
     $port = $addressArgument.Split(":")[2].Trim("http://")
 
-    # Flag for PROVING state
-    $provingStateReached = $false
-
+	#Start Service with Arguments for Iteration of Instance
     Log-Message "$instanceName is starting service.exe" "INFO"
     $serviceProcess = Start-Process -FilePath ".\service.exe" -ArgumentList $arguments -NoNewWindow -PassThru -RedirectStandardError $serviceLogFilePath
 
@@ -171,10 +173,6 @@ function Run-Instance {
         Log-Message "$instanceName failed to start Post Service." "ERROR"
         return
     }
-
-    $previousState = ""
-    $provingFound = $false
-    $idleFound = $false
 
     do {
         Start-Sleep -Seconds 30
