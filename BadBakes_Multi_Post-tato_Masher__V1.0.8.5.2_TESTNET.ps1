@@ -246,7 +246,7 @@ function Stop-Gracefully {
         $process.CloseMainWindow()
 
         # Wait for the process to exit gracefully
-        if (-not $process.WaitForExit(30)) {  # Wait up to 30 seconds for graceful exit
+        if (-not $process.WaitForExit(3000)) {  # Wait up to 30 seconds for graceful exit
             Log-Message "Process did not exit gracefully within the timeout period. Forcing termination." "WARNING"
             $process.Kill()
         } else {
@@ -379,8 +379,9 @@ function Update-ConsoleWithRemainingTime {
         Start-Sleep -Seconds 1  # Update every second
 
         # Exit the loop when the time difference is less than or equal to zero
-        if ($timeDifference.TotalSeconds -le 0) {
-            break
+        if ($timeDifference.TotalSeconds -le 1) {
+            Log-Message "Running POST Services" "INFO"
+			break
         }
     }
 }
