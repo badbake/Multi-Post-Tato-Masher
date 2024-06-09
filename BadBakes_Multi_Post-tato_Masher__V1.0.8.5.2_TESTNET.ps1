@@ -327,7 +327,7 @@ function Run-AllInstances {
         }
     } while ($instancesInProvingState)
 
-    Log-Message "All instances are in IDLE state." "INFO"
+    Log-Message "All POST Services have completed proofs." "INFO"
 }
 
 
