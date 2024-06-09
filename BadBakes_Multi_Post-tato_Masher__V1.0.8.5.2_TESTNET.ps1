@@ -76,7 +76,7 @@ $instances = @{
             "--randomx-mode=fast"
         )
     }
-    # Add more Posts with names and arguments for all Post Services needed.
+    # Add/Remove Posts with names and arguments for all Post Services needed.
 }
 
 # Function to log messages with timestamp and log level
