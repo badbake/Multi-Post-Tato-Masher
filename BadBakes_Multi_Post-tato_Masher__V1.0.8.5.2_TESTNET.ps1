@@ -15,6 +15,9 @@ $WindowTitle = "Multi Post-tato Masher TESTNET"
 $host.ui.RawUI.WindowTitle = $WindowTitle
 $grpcurl = Join-Path -Path $PSScriptRoot -ChildPath "grpcurl.exe"
 
+# Define log level (set to INFO by default, can be set to DEBUG, WARNING, ERROR)
+$global:LogLevel = "INFO"
+
 # Define user-customizable parameters
 $logDirectory = ".\Logs"
 if (-not (Test-Path -Path $logDirectory)) {
@@ -86,15 +89,26 @@ function Log-Message {
         [string]$level = "INFO"  # Default level is INFO
     )
 
-    $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
-    $logMessage = "$timestamp - [$level] - $message"
+    # Define the log level hierarchy
+    $logLevelHierarchy = @{
+        "DEBUG" = 1
+        "INFO" = 2
+        "WARNING" = 3
+        "ERROR" = 4
+    }
 
-    # Write the log message to the console with colors
-    Colorize-Logs -message $message -level $level -timestamp $timestamp
+    # Only log messages that are equal to or higher than the current log level
+    if ($logLevelHierarchy[$level] -ge $logLevelHierarchy[$global:LogLevel]) {
+        $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+        $logMessage = "$timestamp - [$level] - $message"
 
-    # Also write to the log file without colors
-    $logMessage | Out-File -Append -FilePath $logFilePath
-}
+        # Write the log message to the console with colors
+        Colorize-Logs -message $message -level $level -timestamp $timestamp
+
+        # Also write to the log file without colors
+        $logMessage | Out-File -Append -FilePath $logFilePath
+    }
+}}
 
 # Function to display colorized logs in the console
 function Colorize-Logs {
