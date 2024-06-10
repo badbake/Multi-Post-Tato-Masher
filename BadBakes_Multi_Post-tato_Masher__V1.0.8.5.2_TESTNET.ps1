@@ -49,31 +49,81 @@ $instances = @{
             "--randomx-mode=fast"
         )
     }
-    "Post3" = @{									#Example - Post3 name for use with Post3.key
+    "Post3" = @{									
         Arguments = @(
             "--address=http://localhost:9094",
-            "--dir=./Post3",						#Set for Post DataDirectory 3
+            "--dir=./Post3",						
             "--operator-address=127.0.0.1:50053",
             "--threads=1",
             "--nonces=128",
             "--randomx-mode=fast"
         )
     }
-    "Post4" = @{									#Example - Post4 name for use with Post4.key
+    "Post4" = @{									
         Arguments = @(
             "--address=http://localhost:9094",
-            "--dir=./Post4",						#Set for Post DataDirectory 4
+            "--dir=./Post4",						
             "--operator-address=127.0.0.1:50054",
             "--threads=1",
             "--nonces=128",
             "--randomx-mode=fast"
         )
     }
-    "Post5" = @{									#Example - Post5 name for use with Post5.key
+    "Post5" = @{									
         Arguments = @(
             "--address=http://localhost:9094",
-            "--dir=./Post5",						#Set for Post DataDirectory 5
+            "--dir=./Post5",						
             "--operator-address=127.0.0.1:50055",
+            "--threads=1",
+            "--nonces=128",
+            "--randomx-mode=fast"
+        )
+    }
+    "Post6" = @{									
+        Arguments = @(
+            "--address=http://localhost:9094",
+            "--dir=./Post6",						
+            "--operator-address=127.0.0.1:50056",
+            "--threads=1",
+            "--nonces=128",
+            "--randomx-mode=fast"
+        )
+    }
+    "Post7" = @{									
+        Arguments = @(
+            "--address=http://localhost:9094",
+            "--dir=./Post7",						
+            "--operator-address=127.0.0.1:50057",
+            "--threads=1",
+            "--nonces=128",
+            "--randomx-mode=fast"
+        )
+    }
+    "Post8" = @{									
+        Arguments = @(
+            "--address=http://localhost:9094",
+            "--dir=./Post8",						
+            "--operator-address=127.0.0.1:50058",
+            "--threads=1",
+            "--nonces=128",
+            "--randomx-mode=fast"
+        )
+    }
+    "Post9" = @{									
+        Arguments = @(
+            "--address=http://localhost:9094",
+            "--dir=./Post9",						
+            "--operator-address=127.0.0.1:50059",
+            "--threads=1",
+            "--nonces=128",
+            "--randomx-mode=fast"
+        )
+    }
+    "Post10" = @{									
+        Arguments = @(
+            "--address=http://localhost:9094",
+            "--dir=./Post10",						
+            "--operator-address=127.0.0.1:50060",
             "--threads=1",
             "--nonces=128",
             "--randomx-mode=fast"
