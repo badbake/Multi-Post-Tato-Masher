@@ -181,7 +181,7 @@ function Run-Instance {
     $serviceProcess = Start-Process -FilePath ".\service.exe" -ArgumentList $arguments -NoNewWindow -PassThru -RedirectStandardError $serviceLogFilePath
 
     # Check if service process started successfully
-    if ($serviceProcess -ne $null -and (Get-Process -Id $serviceProcess.Id -ErrorAction SilentlyContinue)) {
+    if ($serviceProcess -ne $null -and (Get-Process -Id $serviceProcess.Id -ErrorAction Inquire)) {
         Log-Message "$instanceName has successfully started Post Service." "INFO"
     } else {
         Log-Message "$instanceName failed to start Post Service." "ERROR"
@@ -291,7 +291,7 @@ function Wait-ForServiceStopped {
     )
 
     do {
-        $serviceProcess = Get-Process -Name $instanceName -ErrorAction SilentlyContinue
+        $serviceProcess = Get-Process -Name $instanceName -ErrorAction Inquire
         if ($serviceProcess) {
             Log-Message "Found running instance of service.exe for '$instanceName'. Attempting to stop it." "INFO"
             Stop-Gracefully -process $serviceProcess
@@ -299,7 +299,7 @@ function Wait-ForServiceStopped {
         } else {
             Start-Sleep -Seconds 1
         }
-    } while (Get-Process -Name $instanceName -ErrorAction SilentlyContinue)
+    } while (Get-Process -Name $instanceName -ErrorAction Inquire)
 
     Log-Message "PostService '$instanceName' has stopped and released resources." "INFO"
 }
