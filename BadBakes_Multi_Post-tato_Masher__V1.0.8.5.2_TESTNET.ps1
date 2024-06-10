@@ -282,9 +282,9 @@ function Run-Instance {
 
     # Check if service process started successfully
     if ($serviceProcess -ne $null -and (Get-Process -Id $serviceProcess.Id -ErrorAction Inquire)) {
-        Log-Message "$instanceName has successfully started Post Service." "INFO"
+        Log-Message "$instanceName has successfully started PoST-Service." "INFO"
     } else {
-        Log-Message "$instanceName failed to start Post Service." "ERROR"
+        Log-Message "$instanceName failed to start PoST-Service." "ERROR"
         return $null
     }
 
@@ -317,7 +317,7 @@ function Run-Instance {
         foreach ($state in $jsonResponse.states) {
             Log-Message "Found '$($state.name)' with state '$($state.state)'." "DEBUG"
             if ($state.name -eq "$instanceName.key") {  # Check if the name exactly matches the instance name with ".key" suffix
-                Log-Message "Instance name '$instanceName' matched in the response." "DEBUG"
+                Log-Message "'$instanceName' matched in the response." "DEBUG"
                 if ($state.state -eq "PROVING") {
                     $provingFound = $true
                     Log-Message "Proving found for '$instanceName'." "DEBUG"
@@ -410,17 +410,43 @@ function Run-AllInstances {
                 # Perform gRPC call to check the state
                 $response = & "$grpcurl" --plaintext -d '{}' "localhost:$port" spacemesh.v1.PostInfoService.PostStates 2>&1
 
-                # Check if the response contains PROVING state
-                if ($response -match '"state": "PROVING"') {
-                    $instancesInProvingState = $true
-                    Log-Message "PROVING state found for instance '$instanceName'. Running instance again." "INFO"
-                    Run-Instance -instanceName $instanceName -arguments $instance.Arguments
+                # Check if the response is empty or if there's an error
+                if (-not $response) {
+                    Log-Message "No response received from gRPC call." "ERROR"
+                    continue
                 }
-                elseif ($response -match '"state": "IDLE"') {
-                    # Do nothing, instance is in IDLE state
+
+                # Convert response to JSON
+                try {
+                    $jsonResponse = $response | ConvertFrom-Json
+                } catch {
+                    Log-Message "Failed to convert response to JSON: $_" "ERROR"
+                    continue
                 }
-                else {
-                    Log-Message "Unknown state for instance '$instanceName'." "WARNING"
+
+                # Check if JSON conversion was successful
+                if (-not $jsonResponse) {
+                    Log-Message "Failed to convert response to JSON." "ERROR"
+                    continue
+                }
+
+                # Now continue with processing the JSON response
+                foreach ($state in $jsonResponse.states) {
+                    Log-Message "Found '$($state.name)' with state '$($state.state)'." "DEBUG"
+                    if ($state.name -eq "$instanceName.key") {  # Check if the name exactly matches the instance name with ".key" suffix
+                        Log-Message "Instance name '$instanceName' matched in the response." "DEBUG"
+                        if ($state.state -eq "PROVING") {
+                            $instancesInProvingState = $true
+                            Log-Message "PROVING state found for instance '$instanceName'. Running instance again." "INFO"
+                            Run-Instance -instanceName $instanceName -arguments $instance.Arguments
+                        } elseif ($state.state -eq "IDLE") {
+                            Log-Message "'$instanceName' shows IDLE." "INFO"
+                        } else {
+                            Log-Message "Unknown state for instance '$instanceName'." "WARNING"
+                        }
+                        # Break out of the loop once the correct instance is found
+                        break
+                    }
                 }
             }
             catch {
@@ -431,6 +457,7 @@ function Run-AllInstances {
 
     Log-Message "All POST Services have completed proofs." "INFO"
 }
+
 
 
 # Function to calculate the next trigger time based on the user's local time zone
