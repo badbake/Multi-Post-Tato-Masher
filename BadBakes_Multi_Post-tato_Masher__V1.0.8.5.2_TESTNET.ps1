@@ -152,7 +152,7 @@ function Run-Instance {
     $previousState = ""
     $provingFound = $false
     $idleFound = $false
-    $provingStateReached = $false	
+    $provingStateReached = $false
 	
     # Log for service.exe
 	$serviceLogFileName = "${instanceName}_service$((Get-Date).ToString('yyyyMMdd')).txt"
@@ -162,7 +162,7 @@ function Run-Instance {
     $addressArgument = ($arguments -like "--address=*")[0]
     $port = $addressArgument.Split(":")[2].Trim("http://")
 
-	#Start Service with Arguments for Instance
+	# Start Service with Arguments for Instance
     Log-Message "$instanceName is starting service.exe" "INFO"
     $serviceProcess = Start-Process -FilePath ".\service.exe" -ArgumentList $arguments -NoNewWindow -PassThru -RedirectStandardError $serviceLogFilePath
 
@@ -171,7 +171,7 @@ function Run-Instance {
         Log-Message "$instanceName has successfully started Post Service." "INFO"
     } else {
         Log-Message "$instanceName failed to start Post Service." "ERROR"
-        return
+        return $null
     }
 
     do {
@@ -182,7 +182,7 @@ function Run-Instance {
         # Check if the response is empty or if there's an error
         if (-not $response) {
             Log-Message "No response received from gRPC call." "ERROR"
-            return
+            return $serviceProcess
         }
 
         # Convert response to JSON
@@ -190,13 +190,13 @@ function Run-Instance {
             $jsonResponse = $response | ConvertFrom-Json
         } catch {
             Log-Message "Failed to convert response to JSON: $_" "ERROR"
-            return
+            return $serviceProcess
         }
 
         # Check if JSON conversion was successful
         if (-not $jsonResponse) {
             Log-Message "Failed to convert response to JSON." "ERROR"
-            return
+            return $serviceProcess
         }
 
         # Now continue with processing the JSON response
@@ -221,9 +221,7 @@ function Run-Instance {
         } elseif ($idleFound -and $provingStateReached) {
             Log-Message "PostService '$instanceName' has completed PROVING and is now in the IDLE state. Initiating shutdown." "INFO"
             Stop-Gracefully -process $serviceProcess
-            #$previousState = " "
-            #$provingStateReached = $false
-            return
+            return $serviceProcess
 		} elseif ($provingFound -and $previousState -eq "PROVING") {
             Log-Message "PostService '$instanceName' is still PROVING." "INFO"
         } elseif ($idleFound -and $previousState -ne "IDLE" -and -not $provingStateReached) {
@@ -242,20 +240,35 @@ function Stop-Gracefully {
     )
 
     try {
-        # Send a termination signal (assuming the process handles it for graceful shutdown)
-        $process.CloseMainWindow()
+        # Send a termination signal and wait for the process to exit gracefully
+        $retryCount = 5
+        $retryInterval = 10000  # 10 seconds
 
-        # Wait for the process to exit gracefully
-        if (-not $process.WaitForExit(3000)) {  # Wait up to 30 seconds for graceful exit
+        for ($i = 0; $i -lt $retryCount; $i++) {
+            if ($process.HasExited) {
+                Log-Message "Instance ended successfully." "INFO"
+                return
+            }
+            Log-Message "Sending termination signal to process ID $($process.Id)..." "INFO"
+            Stop-Process -Id $process.Id -Force:$false
+
+            Log-Message "Waiting for process to exit gracefully..." "INFO"
+            Start-Sleep -Milliseconds $retryInterval
+        }
+
+        # If the process is still not exited, forcefully terminate it
+        if (-not $process.HasExited) {
             Log-Message "Process did not exit gracefully within the timeout period. Forcing termination." "WARNING"
             $process.Kill()
-        } else {
-            Log-Message "Instance ended successfully." "INFO"
+            $process.WaitForExit()
         }
+
+        Log-Message "Instance ended successfully." "INFO"
     } catch {
         Log-Message "An error occurred while attempting to stop the process gracefully: $_" "ERROR"
     }
 }
+
 
 # Function to wait for service to stop
 function Wait-ForServiceStopped {
