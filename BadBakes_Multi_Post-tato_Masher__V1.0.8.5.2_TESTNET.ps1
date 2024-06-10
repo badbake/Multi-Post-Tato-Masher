@@ -386,7 +386,7 @@ function Run-AllInstances {
 # Function to calculate the next trigger time based on the user's local time zone
 function Calculate-NextTriggerTime {
     # Define the initial trigger date and time in UTC
-    $initialTriggerDateTimeUtc = [DateTime]::new(2024, 6, 6, 23, 00, 0)
+    $initialTriggerDateTimeUtc = [DateTime]::new(2024, 6, 6, 23, 01, 0)
 
     # Convert the initial trigger time to the local time zone
     $initialTriggerDateTimeLocal = $initialTriggerDateTimeUtc.ToLocalTime()
