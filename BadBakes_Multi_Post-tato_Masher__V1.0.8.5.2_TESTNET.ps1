@@ -255,31 +255,31 @@ function Stop-Gracefully {
 
     try {
         # Send a termination signal and wait for the process to exit gracefully
-        $retryCount = 5
-        $retryInterval = 10000  # 10 seconds
+        $retryCount = 3
+        $retryInterval = 5000  # 5 seconds
 
         for ($i = 0; $i -lt $retryCount; $i++) {
             if ($process.HasExited) {
-                Log-Message "Instance ended successfully." "INFO"
+                Log-Message "POSTservice ended successfully." "INFO"
                 return
             }
-            Log-Message "Sending termination signal to process ID $($process.Id)..." "INFO"
+            Log-Message "Sending termination signal to POSTservice..." "INFO"
             Stop-Process -Id $process.Id -Force:$false
 
-            Log-Message "Waiting for process to exit gracefully..." "INFO"
+            Log-Message "Waiting for process to exit..." "INFO"
             Start-Sleep -Milliseconds $retryInterval
         }
 
         # If the process is still not exited, forcefully terminate it
         if (-not $process.HasExited) {
-            Log-Message "Process did not exit gracefully within the timeout period. Forcing termination." "WARNING"
+            Log-Message "POSTservice did not exit gracefully within the timeout period. Forcing termination." "WARNING"
             $process.Kill()
             $process.WaitForExit()
         }
 
-        Log-Message "Instance ended successfully." "INFO"
+        Log-Message "POSTservice ended successfully." "INFO"
     } catch {
-        Log-Message "An error occurred while attempting to stop the process gracefully: $_" "ERROR"
+        Log-Message "An error occurred while attempting to stop the POSTservice: $_" "ERROR"
     }
 }
 
@@ -301,7 +301,7 @@ function Wait-ForServiceStopped {
         }
     } while (Get-Process -Name $instanceName -ErrorAction Inquire)
 
-    Log-Message "PostService '$instanceName' has stopped and released resources." "INFO"
+    Log-Message "PostService '$instanceName' has stopped." "INFO"
 }
 
 # Function to run all instances sequentially
