@@ -79,106 +79,7 @@ $instances = @{
             "--randomx-mode=fast"
         )
     }
-    "Post6" = @{									
-        Arguments = @(
-            "--address=http://localhost:9094",
-            "--dir=./Post6",						
-            "--operator-address=127.0.0.1:50056",
-            "--threads=1",
-            "--nonces=128",
-            "--randomx-mode=fast"
-        )
-    }
-    "Post7" = @{									
-        Arguments = @(
-            "--address=http://localhost:9094",
-            "--dir=./Post7",						
-            "--operator-address=127.0.0.1:50057",
-            "--threads=1",
-            "--nonces=128",
-            "--randomx-mode=fast"
-        )
-    }
-    "Post8" = @{									
-        Arguments = @(
-            "--address=http://localhost:9094",
-            "--dir=./Post8",						
-            "--operator-address=127.0.0.1:50058",
-            "--threads=1",
-            "--nonces=128",
-            "--randomx-mode=fast"
-        )
-    }
-    "Post9" = @{									
-        Arguments = @(
-            "--address=http://localhost:9094",
-            "--dir=./Post9",						
-            "--operator-address=127.0.0.1:50059",
-            "--threads=1",
-            "--nonces=128",
-            "--randomx-mode=fast"
-        )
-    }
-    "Post10" = @{									
-        Arguments = @(
-            "--address=http://localhost:9094",
-            "--dir=./Post10",						
-            "--operator-address=127.0.0.1:50060",
-            "--threads=1",
-            "--nonces=128",
-            "--randomx-mode=fast"
-        )
-    }
-    "Post11" = @{									#Name of each instance must match the identity.key associaited with that POST data set. (Example - Post1 for use with Post1.key.) 
-        Arguments = @(
-            "--address=http://localhost:9094",		#Node's gRPC address. Ensure it matches the node's grpc-post-listener config option.
-            "--dir=./Post11",						#Post Data Directory, Set for each different set of Post Data.
-            "--operator-address=127.0.0.1:50051",	#Operator API
-            "--threads=2",							#Proving Options based on your hardware
-            "--nonces=128",							#Proving Options based on your hardware
-            "--randomx-mode=fast"					#Proving Options based on your hardware
-        )
-    }
-    "Post12" = @{									#Example - Post2 name for use with Post2.key
-        Arguments = @(
-            "--address=http://localhost:9094",
-            "--dir=./Post12",						#Set for Post DataDirectory 2
-            "--operator-address=127.0.0.1:50052",
-            "--threads=2",
-            "--nonces=128",
-            "--randomx-mode=fast"
-        )
-    }
-    "Post13" = @{									
-        Arguments = @(
-            "--address=http://localhost:9094",
-            "--dir=./Post13",						
-            "--operator-address=127.0.0.1:50053",
-            "--threads=2",
-            "--nonces=128",
-            "--randomx-mode=fast"
-        )
-    }
-    "Post14" = @{									
-        Arguments = @(
-            "--address=http://localhost:9094",
-            "--dir=./Post14",						
-            "--operator-address=127.0.0.1:50054",
-            "--threads=2",
-            "--nonces=128",
-            "--randomx-mode=fast"
-        )
-    }
-    "Post15" = @{									
-        Arguments = @(
-            "--address=http://localhost:9094",
-            "--dir=./Post15",						
-            "--operator-address=127.0.0.1:50055",
-            "--threads=2",
-            "--nonces=128",
-            "--randomx-mode=fast"
-        )
-    }
+
     # Add/Remove Posts with names and arguments for all Post Services needed.
 }
 
@@ -394,66 +295,64 @@ function Run-AllInstances {
 
     # Check if any instances are still in PROVING state and run them again
     $instancesInProvingState = $false
-    do {
-        # Check each instance for PROVING state
-        foreach ($instanceName in $instances.Keys) {
-            $instance = $instances[$instanceName]
+	
+    foreach ($instanceName in $instances.Keys) {
+        $instance = $instances[$instanceName]
 		
-				# Display Message
-				Log-Message "Checking State of '$instanceName'." "INFO"
-		
-            try {
-                # Extract port number from the address argument
-                $addressArgument = ($instance.Arguments -like "--address=*")[0]
-                $port = $addressArgument.Split(":")[2].Trim("http://")
+		# Display Message
+		Log-Message "Checking State of '$instanceName'." "INFO"
 
-                # Perform gRPC call to check the state
-                $response = & "$grpcurl" --plaintext -d '{}' "localhost:$port" spacemesh.v1.PostInfoService.PostStates 2>&1
+        try {
+            # Extract port number from the address argument
+            $addressArgument = ($instance.Arguments -like "--address=*")[0]
+            $port = $addressArgument.Split(":")[2].Trim("http://")
 
-                # Check if the response is empty or if there's an error
-                if (-not $response) {
-                    Log-Message "No response received from gRPC call." "ERROR"
-                    continue
-                }
+            # Perform gRPC call to check the state
+            $response = & "$grpcurl" --plaintext -d '{}' "localhost:$port" spacemesh.v1.PostInfoService.PostStates 2>&1
 
-                # Convert response to JSON
-                try {
-                    $jsonResponse = $response | ConvertFrom-Json
-                } catch {
-                    Log-Message "Failed to convert response to JSON: $_" "ERROR"
-                    continue
-                }
-
-                # Check if JSON conversion was successful
-                if (-not $jsonResponse) {
-                    Log-Message "Failed to convert response to JSON." "ERROR"
-                    continue
-                }
-
-                # Now continue with processing the JSON response
-                foreach ($state in $jsonResponse.states) {
-                    Log-Message "Found '$($state.name)' with state '$($state.state)'." "DEBUG"
-                    if ($state.name -eq "$instanceName.key") {  # Check if the name exactly matches the instance name with ".key" suffix
-                        Log-Message "Instance name '$instanceName' matched in the response." "DEBUG"
-                        if ($state.state -eq "PROVING") {
-                            $instancesInProvingState = $true
-                            Log-Message "PROVING state found for instance '$instanceName'. Running instance again." "INFO"
-                            Run-Instance -instanceName $instanceName -arguments $instance.Arguments
-                        } elseif ($state.state -eq "IDLE") {
-                            Log-Message "'$instanceName' shows IDLE." "INFO"
-                        } else {
-                            Log-Message "Unknown state for instance '$instanceName'." "WARNING"
-                        }
-                        # Break out of the loop once the correct instance is found
-                        break
-                    }
-                }
+            # Check if the response is empty or if there's an error
+            if (-not $response) {
+                Log-Message "No response received from gRPC call." "ERROR"
+                continue
             }
-            catch {
-                Log-Message "Error occurred while checking state for instance '$instanceName': $_" "ERROR"
+
+            # Convert response to JSON
+            try {
+                $jsonResponse = $response | ConvertFrom-Json
+            } catch {
+                Log-Message "Failed to convert response to JSON: $_" "ERROR"
+                continue
+            }
+
+            # Check if JSON conversion was successful
+            if (-not $jsonResponse) {
+                Log-Message "Failed to convert response to JSON." "ERROR"
+                continue
+            }
+
+            # Now continue with processing the JSON response
+            foreach ($state in $jsonResponse.states) {
+                Log-Message "Found '$($state.name)' with state '$($state.state)'." "DEBUG"
+                if ($state.name -eq "$instanceName.key") {  # Check if the name exactly matches the instance name with ".key" suffix
+                    Log-Message "Instance name '$instanceName' matched in the response." "DEBUG"
+                    if ($state.state -eq "PROVING") {
+                        $provingInstancesFound = $true
+                        Log-Message "PROVING state found. Running PoST-Service for '$instanceName'." "INFO"
+                        Run-Instance -instanceName $instanceName -arguments $instance.Arguments
+                    } elseif ($state.state -eq "IDLE") {
+                        Log-Message "'$instanceName' shows IDLE." "INFO"
+                    } else {
+                        Log-Message "Unknown state for instance '$instanceName'." "WARNING"
+                    }
+                    # Break out of the loop once the correct instance is found
+                    break
+                }
             }
         }
-    } while ($instancesInProvingState)
+        catch {
+            Log-Message "Error occurred while checking state for instance '$instanceName': $_" "ERROR"
+        }
+    }
 
     Log-Message "All POST Services have completed proofs." "INFO"
 }
@@ -463,7 +362,7 @@ function Run-AllInstances {
 # Function to calculate the next trigger time based on the user's local time zone
 function Calculate-NextTriggerTime {
     # Define the initial trigger date and time in UTC
-    $initialTriggerDateTimeUtc = [DateTime]::new(2024, 6, 6, 23, 01, 0)
+    $initialTriggerDateTimeUtc = [DateTime]::new(2024, 6, 6, 23, 00, 0)
 
     # Convert the initial trigger time to the local time zone
     $initialTriggerDateTimeLocal = $initialTriggerDateTimeUtc.ToLocalTime()
