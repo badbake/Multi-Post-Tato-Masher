@@ -16,7 +16,7 @@ $host.ui.RawUI.WindowTitle = $WindowTitle
 $grpcurl = Join-Path -Path $PSScriptRoot -ChildPath "grpcurl.exe"
 
 # Define log level (set to INFO by default, can be set to DEBUG, WARNING, ERROR)
-$global:LogLevel = "INFO"
+$global:LogLevel = "DEBUG"
 
 # Define user-customizable parameters
 $logDirectory = ".\Logs"
@@ -226,7 +226,7 @@ function Run-Instance {
     $addressArgument = ($arguments -like "--address=*")[0]
     $port = $addressArgument.Split(":")[2].Trim("http://")
 
-	# Start Service with Arguments for Instance
+    # Start Service with Arguments for Instance
     Log-Message "$instanceName is starting service.exe" "INFO"
     $serviceProcess = Start-Process -FilePath ".\service.exe" -ArgumentList $arguments -NoNewWindow -PassThru -RedirectStandardError $serviceLogFilePath
 
@@ -246,7 +246,7 @@ function Run-Instance {
         # Check if the response is empty or if there's an error
         if (-not $response) {
             Log-Message "No response received from gRPC call." "ERROR"
-            return $serviceProcess
+            return
         }
 
         # Convert response to JSON
@@ -254,19 +254,19 @@ function Run-Instance {
             $jsonResponse = $response | ConvertFrom-Json
         } catch {
             Log-Message "Failed to convert response to JSON: $_" "ERROR"
-            return $serviceProcess
+            return
         }
 
         # Check if JSON conversion was successful
         if (-not $jsonResponse) {
             Log-Message "Failed to convert response to JSON." "ERROR"
-            return $serviceProcess
+            return
         }
 
         # Now continue with processing the JSON response
         foreach ($state in $jsonResponse.states) {
-            Log-Message "Found instance '$($state.name)' with state '$($state.state)'." "DEBUG"
-            if ($state.name -like "$instanceName*") {  # Check if the name contains the expected instance name
+            Log-Message "Found '$($state.name)' with state '$($state.state)'." "DEBUG"
+            if ($state.name -eq "$instanceName.key") {  # Check if the name exactly matches the instance name with ".key" suffix
                 Log-Message "Instance name '$instanceName' matched in the response." "DEBUG"
                 if ($state.state -eq "PROVING") {
                     $provingFound = $true
@@ -285,8 +285,8 @@ function Run-Instance {
         } elseif ($idleFound -and $provingStateReached) {
             Log-Message "PostService '$instanceName' has completed PROVING and the Node has accepted it. Initiating shutdown." "INFO"
             Stop-Gracefully -process $serviceProcess
-            return $serviceProcess
-		} elseif ($provingFound -and $previousState -eq "PROVING") {
+            return
+        } elseif ($provingFound -and $previousState -eq "PROVING") {
             Log-Message "PostService '$instanceName' is still PROVING." "INFO"
         } elseif ($idleFound -and $previousState -ne "IDLE" -and -not $provingStateReached) {
             Log-Message "PostService '$instanceName' is in the IDLE state." "INFO"
@@ -296,6 +296,7 @@ function Run-Instance {
         }
     } while ($true)
 }
+
 
 # Function to initiate a graceful shutdown of the process
 function Stop-Gracefully {
@@ -334,32 +335,11 @@ function Stop-Gracefully {
 }
 
 
-# Function to wait for service to stop
-function Wait-ForServiceStopped {
-    param (
-        [string]$instanceName
-    )
-
-    do {
-        $serviceProcess = Get-Process -Name $instanceName -ErrorAction Inquire
-        if ($serviceProcess) {
-            Log-Message "Found running instance of service.exe for '$instanceName'. Attempting to stop it." "INFO"
-            Stop-Gracefully -process $serviceProcess
-            Start-Sleep -Seconds 1
-        } else {
-            Start-Sleep -Seconds 1
-        }
-    } while (Get-Process -Name $instanceName -ErrorAction Inquire)
-
-    Log-Message "PostService '$instanceName' has stopped." "INFO"
-}
-
 # Function to run all instances sequentially
 function Run-AllInstances {
     foreach ($instanceName in $instances.Keys) {
         $instance = $instances[$instanceName]
         Run-Instance -instanceName $instanceName -arguments $instance.Arguments
-        Wait-ForServiceStopped -instanceName $instanceName
     }
 
     # Check if any instances are still in PROVING state and run them again
@@ -385,7 +365,6 @@ function Run-AllInstances {
                     $instancesInProvingState = $true
                     Log-Message "PROVING state found for instance '$instanceName'. Running instance again." "INFO"
                     Run-Instance -instanceName $instanceName -arguments $instance.Arguments
-                    Wait-ForServiceStopped -instanceName $instanceName
                 }
                 elseif ($response -match '"state": "IDLE"') {
                     # Do nothing, instance is in IDLE state
@@ -503,18 +482,43 @@ function Check-And-Run-ProvingInstances {
             # Perform gRPC call to check the state
             $response = & "$grpcurl" --plaintext -d '{}' "localhost:$port" spacemesh.v1.PostInfoService.PostStates 2>&1
 
-            # Check if the response contains PROVING state
-            if ($response -match '"state": "PROVING"') {
-                $provingInstancesFound = $true
-                Log-Message "PROVING state found for instance '$instanceName'. Running instance before proceeding." "INFO"
-                Run-Instance -instanceName $instanceName -arguments $instance.Arguments
-                Wait-ForServiceStopped -instanceName $instanceName
+            # Check if the response is empty or if there's an error
+            if (-not $response) {
+                Log-Message "No response received from gRPC call." "ERROR"
+                continue
             }
-            elseif ($response -match '"state": "IDLE"') {
-                Log-Message "'$instanceName' shows IDLE." "INFO"
+
+            # Convert response to JSON
+            try {
+                $jsonResponse = $response | ConvertFrom-Json
+            } catch {
+                Log-Message "Failed to convert response to JSON: $_" "ERROR"
+                continue
             }
-            else {
-                Log-Message "Unknown state for instance '$instanceName'." "WARNING"
+
+            # Check if JSON conversion was successful
+            if (-not $jsonResponse) {
+                Log-Message "Failed to convert response to JSON." "ERROR"
+                continue
+            }
+
+            # Now continue with processing the JSON response
+            foreach ($state in $jsonResponse.states) {
+                Log-Message "Found '$($state.name)' with state '$($state.state)'." "DEBUG"
+                if ($state.name -eq "$instanceName.key") {  # Check if the name exactly matches the instance name with ".key" suffix
+                    Log-Message "Instance name '$instanceName' matched in the response." "DEBUG"
+                    if ($state.state -eq "PROVING") {
+                        $provingInstancesFound = $true
+                        Log-Message "PROVING state found for instance '$instanceName'. Running instance before proceeding." "INFO"
+                        Run-Instance -instanceName $instanceName -arguments $instance.Arguments
+                    } elseif ($state.state -eq "IDLE") {
+                        Log-Message "'$instanceName' shows IDLE." "INFO"
+                    } else {
+                        Log-Message "Unknown state for instance '$instanceName'." "WARNING"
+                    }
+                    # Break out of the loop once the correct instance is found
+                    break
+                }
             }
         }
         catch {
@@ -527,6 +531,7 @@ function Check-And-Run-ProvingInstances {
         Log-Message "No PoST Services found requiring proof, proceeding with timer..." "INFO"
     }
 }
+
 
 
 
