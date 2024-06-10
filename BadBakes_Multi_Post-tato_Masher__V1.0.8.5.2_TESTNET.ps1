@@ -129,6 +129,56 @@ $instances = @{
             "--randomx-mode=fast"
         )
     }
+    "Post11" = @{									#Name of each instance must match the identity.key associaited with that POST data set. (Example - Post1 for use with Post1.key.) 
+        Arguments = @(
+            "--address=http://localhost:9094",		#Node's gRPC address. Ensure it matches the node's grpc-post-listener config option.
+            "--dir=./Post11",						#Post Data Directory, Set for each different set of Post Data.
+            "--operator-address=127.0.0.1:50051",	#Operator API
+            "--threads=2",							#Proving Options based on your hardware
+            "--nonces=128",							#Proving Options based on your hardware
+            "--randomx-mode=fast"					#Proving Options based on your hardware
+        )
+    }
+    "Post12" = @{									#Example - Post2 name for use with Post2.key
+        Arguments = @(
+            "--address=http://localhost:9094",
+            "--dir=./Post12",						#Set for Post DataDirectory 2
+            "--operator-address=127.0.0.1:50052",
+            "--threads=2",
+            "--nonces=128",
+            "--randomx-mode=fast"
+        )
+    }
+    "Post13" = @{									
+        Arguments = @(
+            "--address=http://localhost:9094",
+            "--dir=./Post13",						
+            "--operator-address=127.0.0.1:50053",
+            "--threads=2",
+            "--nonces=128",
+            "--randomx-mode=fast"
+        )
+    }
+    "Post14" = @{									
+        Arguments = @(
+            "--address=http://localhost:9094",
+            "--dir=./Post14",						
+            "--operator-address=127.0.0.1:50054",
+            "--threads=2",
+            "--nonces=128",
+            "--randomx-mode=fast"
+        )
+    }
+    "Post15" = @{									
+        Arguments = @(
+            "--address=http://localhost:9094",
+            "--dir=./Post15",						
+            "--operator-address=127.0.0.1:50055",
+            "--threads=2",
+            "--nonces=128",
+            "--randomx-mode=fast"
+        )
+    }
     # Add/Remove Posts with names and arguments for all Post Services needed.
 }
 
@@ -219,7 +269,7 @@ function Run-Instance {
     $provingStateReached = $false
 	
     # Log for service.exe
-	$serviceLogFileName = "${instanceName}_service$((Get-Date).ToString('yyyyMMdd')).txt"
+	$serviceLogFileName = "${instanceName}_service$((Get-Date).ToString('MMddyyyy_HHmm')).txt"
 	$serviceLogFilePath = Join-Path -Path $logDirectory -ChildPath $serviceLogFileName
 
     # Extract port number from the address argument
@@ -323,7 +373,7 @@ function Stop-PoST-Service {
 
         # If the process is still not exited, forcefully terminate it
         if (-not $process.HasExited) {
-            Log-Message "PoST-Service did not exit gracefully within the timeout period. Forcing termination." "WARNING"
+            Log-Message "PoST-Service did not exit within the timeout period. Forcing termination." "WARNING"
             $process.Kill()
             $process.WaitForExit()
         }
@@ -503,7 +553,7 @@ function Check-And-Run-ProvingInstances {
                     Log-Message "Instance name '$instanceName' matched in the response." "DEBUG"
                     if ($state.state -eq "PROVING") {
                         $provingInstancesFound = $true
-                        Log-Message "PROVING state found for instance '$instanceName'. Running instance before proceeding." "INFO"
+                        Log-Message "PROVING state found. Running PoST-Service for '$instanceName'." "INFO"
                         Run-Instance -instanceName $instanceName -arguments $instance.Arguments
                     } elseif ($state.state -eq "IDLE") {
                         Log-Message "'$instanceName' shows IDLE." "INFO"
