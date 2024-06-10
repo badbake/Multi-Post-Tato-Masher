@@ -364,8 +364,11 @@ function Calculate-NextTriggerTime {
     # Get the current date and time in the local time zone
     $currentDateTimeLocal = Get-Date
 
+    # Define the trigger window (2 hours)
+    $triggerWindowHours = 2
+
     # Check if the current date and time is past the initial trigger time
-    if ($currentDateTimeLocal -gt $initialTriggerDateTimeLocal) {
+    if ($currentDateTimeLocal -gt $initialTriggerDateTimeLocal.AddHours($triggerWindowHours)) {
         # Calculate the time difference between the current time and the initial trigger time
         $timeDifference = $currentDateTimeLocal - $initialTriggerDateTimeLocal
         # Calculate the number of full 1-day intervals that have passed
@@ -373,7 +376,7 @@ function Calculate-NextTriggerTime {
         # Calculate the next trigger time by adding the necessary number of 1-day intervals to the initial trigger time
         $nextTriggerDateTimeLocal = $initialTriggerDateTimeLocal.AddDays($fullIntervals + 1)
     } else {
-        # If the current time is before the initial trigger time, the next trigger time is the initial trigger time
+        # If the current time is before the initial trigger time + window, the next trigger time is the initial trigger time
         $nextTriggerDateTimeLocal = $initialTriggerDateTimeLocal
     }
 
@@ -386,11 +389,13 @@ function Calculate-NextTriggerTime {
 # Function to update the console with the remaining time
 function Update-ConsoleWithRemainingTime {
     param (
-        [datetime]$nextTriggerTime
+        [datetime]$nextTriggerTime,
+        [int]$triggerWindowHours
     )
 
     while ($true) {
-        $timeDifference = $nextTriggerTime - (Get-Date)
+        $currentDateTime = Get-Date
+        $timeDifference = $nextTriggerTime - $currentDateTime
 
         # Calculate remaining time in days, hours, minutes, and seconds
         $remainingDays = [Math]::Floor($timeDifference.TotalDays)
@@ -405,10 +410,10 @@ function Update-ConsoleWithRemainingTime {
         Write-Host -NoNewline "`r                             - Time Remaining: $formattedRemainingTime"
         Start-Sleep -Seconds 1  # Update every second
 
-        # Exit the loop when the time difference is less than or equal to zero
-        if ($timeDifference.TotalSeconds -le 1) {
+        # Exit the loop when the current time is within the trigger window
+        if ($currentDateTime -ge $nextTriggerTime -and $currentDateTime -lt $nextTriggerTime.AddHours($triggerWindowHours)) {
             Log-Message "Running POST Services" "INFO"
-			break
+            break
         }
     }
 }
@@ -417,17 +422,18 @@ function Update-ConsoleWithRemainingTime {
 function Wait-ForTrigger {
     while ($true) {
         $nextTriggerTime = Calculate-NextTriggerTime
-        $timeDifference = $nextTriggerTime - (Get-Date)
+        $triggerWindowHours = 2
 
         Log-Message "Waiting until PoEt Cycle Gap..." "INFO"
 
         # Update the console with the remaining time until the next trigger
-        Update-ConsoleWithRemainingTime -nextTriggerTime $nextTriggerTime
+        Update-ConsoleWithRemainingTime -nextTriggerTime $nextTriggerTime -triggerWindowHours $triggerWindowHours
 
-        # Trigger all instances once the timer reaches zero
+        # Trigger all instances once the timer reaches the trigger window
         Run-AllInstances
     }
 }
+
 
 # Function to check for PROVING states and run corresponding instances
 function Check-And-Run-ProvingInstances {
