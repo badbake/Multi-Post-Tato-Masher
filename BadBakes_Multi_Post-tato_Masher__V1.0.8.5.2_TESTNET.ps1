@@ -108,7 +108,7 @@ function Log-Message {
         # Also write to the log file without colors
         $logMessage | Out-File -Append -FilePath $logFilePath
     }
-}}
+}
 
 # Function to display colorized logs in the console
 function Colorize-Logs {
