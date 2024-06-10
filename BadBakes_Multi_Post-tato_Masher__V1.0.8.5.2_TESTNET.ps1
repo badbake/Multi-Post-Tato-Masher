@@ -279,42 +279,42 @@ function Run-Instance {
         }
 
         if ($provingFound -and $previousState -ne "PROVING") {
-            Log-Message "PostService '$instanceName' is PROVING." "INFO"
+            Log-Message "PoST-Service '$instanceName' is PROVING." "INFO"
             $provingStateReached = $true
             $previousState = "PROVING"
         } elseif ($idleFound -and $provingStateReached) {
-            Log-Message "PostService '$instanceName' has completed PROVING and the Node has received it. Initiating shutdown." "INFO"
-            Stop-Gracefully -process $serviceProcess
+            Log-Message "PoST-Service '$instanceName' has completed PROVING and the Node has received it. Initiating shutdown." "INFO"
+            Stop-PoST-Service -process $serviceProcess
             return
         } elseif ($provingFound -and $previousState -eq "PROVING") {
-            Log-Message "PostService '$instanceName' is still PROVING." "INFO"
+            Log-Message "PoST-Service '$instanceName' is still PROVING." "INFO"
         } elseif ($idleFound -and $previousState -ne "IDLE" -and -not $provingStateReached) {
-            Log-Message "PostService '$instanceName' is in the IDLE state." "INFO"
+            Log-Message "PoST-Service '$instanceName' is in the IDLE state." "INFO"
             $previousState = "IDLE"
         } elseif ($idleFound -and $previousState -eq "IDLE") {
-            Log-Message "PostService '$instanceName' continues to be in the IDLE state." "INFO"
+            Log-Message "PoST-Service '$instanceName' continues to be in the IDLE state." "INFO"
         }
     } while ($true)
 }
 
 
 # Function to initiate a graceful shutdown of the process
-function Stop-Gracefully {
+function Stop-PoST-Service {
     param (
         [System.Diagnostics.Process]$process
     )
 
     try {
-        # Send a termination signal and wait for the process to exit gracefully
+        # Send a termination signal and wait for the process to exit
         $retryCount = 3
         $retryInterval = 5000  # 5 seconds
 
         for ($i = 0; $i -lt $retryCount; $i++) {
             if ($process.HasExited) {
-                Log-Message "POSTservice ended successfully." "INFO"
+                Log-Message "PoST-Service ended successfully." "INFO"
                 return
             }
-            Log-Message "Sending termination signal to POSTservice..." "INFO"
+            Log-Message "Sending termination signal to PoST-Service..." "INFO"
             Stop-Process -Id $process.Id -Force:$false
 
             Log-Message "Waiting for process to exit..." "INFO"
@@ -323,14 +323,14 @@ function Stop-Gracefully {
 
         # If the process is still not exited, forcefully terminate it
         if (-not $process.HasExited) {
-            Log-Message "POSTservice did not exit gracefully within the timeout period. Forcing termination." "WARNING"
+            Log-Message "PoST-Service did not exit gracefully within the timeout period. Forcing termination." "WARNING"
             $process.Kill()
             $process.WaitForExit()
         }
 
-        Log-Message "POSTservice ended successfully." "INFO"
+        Log-Message "PoST-Service ended successfully." "INFO"
     } catch {
-        Log-Message "An error occurred while attempting to stop the POSTservice: $_" "ERROR"
+        Log-Message "An error occurred while attempting to stop the PoST-Service: $_" "ERROR"
     }
 }
 
