@@ -283,7 +283,7 @@ function Run-Instance {
             $provingStateReached = $true
             $previousState = "PROVING"
         } elseif ($idleFound -and $provingStateReached) {
-            Log-Message "PostService '$instanceName' has completed PROVING and the Node has accepted it. Initiating shutdown." "INFO"
+            Log-Message "PostService '$instanceName' has completed PROVING and the Node has received it. Initiating shutdown." "INFO"
             Stop-Gracefully -process $serviceProcess
             return
         } elseif ($provingFound -and $previousState -eq "PROVING") {
