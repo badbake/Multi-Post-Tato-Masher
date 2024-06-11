@@ -25,6 +25,9 @@ if (-not (Test-Path -Path $logDirectory)) {
     New-Item -ItemType Directory -Path $logDirectory
 }
 
+# Set Interval in seconds for Checking Post Service Status while running.
+$provingCheckInterval = 30
+
 $logFileName = "PostMasher$((Get-Date).ToString('MMddyyyy_HHmm')).txt"
 $logFilePath = Join-Path -Path $logDirectory -ChildPath $logFileName
 
@@ -222,14 +225,14 @@ function GetNumUnitsForInstance {
         try {
             $metadataContent = Get-Content -Path $metadataFilePath | ConvertFrom-Json
             $numUnits = $metadataContent.NumUnits
-            Log-Message "NumUnits for $instanceName: $numUnits" "INFO"
+            Log-Message "NumUnits for ${instanceName}: $numUnits" "INFO"
             return $numUnits
         } catch {
-            Log-Message "Failed to read or parse $metadataFilePath: $_" "ERROR"
+            Log-Message "Failed to read or parse ${metadataFilePath}: $_" "ERROR"
             return $null
         }
     } else {
-        Log-Message "Metadata file not found at $metadataFilePath" "ERROR"
+	Log-Message "Metadata file not found at ${metadataFilePath}" "ERROR"
         return $null
     }
 }
@@ -262,11 +265,11 @@ function Curl-ProvingProgress {
                     Log-Message "Proving is in Stage 1." "INFO"
                 } elseif ($position -gt 0) {
                     $progressPercentage = [math]::Round(($position / ($numUnits * 68719476736)) * 100, 0)
-					Log-Message "Math Result: ( $position / $numUnits ) x 100 = $progressPercentage" "DEBUG"
+					Log-Message "Math Result: ( ${position} / ${numUnits} ) x 100 = ${progressPercentage}" "DEBUG"
                     Log-Message "Proving Post_Data Read: Progress $progressPercentage%" "INFO"
                 }
 
-                Start-Sleep -Seconds 30
+                Start-Sleep -Seconds $provingCheckInterval
             } else {
                 Log-Message "Unexpected JSON structure: $responseContent" "WARNING"
                 return $null
@@ -292,6 +295,10 @@ function Run-Instance {
 
     # Call GetNumUnitsForInstance to get the NumUnits value
     $numUnits = GetNumUnitsForInstance -instanceDir $instanceDir
+
+    # Extract operator address from the arguments
+    $operatorAddressArgument = ($arguments -like "--operator-address=*")[0]
+    $operatorAddress = $operatorAddressArgument.Split("=")[1]
 
     # Expected responses and Flags
     $idleResponse = '"state": "IDLE"'
@@ -323,7 +330,7 @@ function Run-Instance {
     }
 
     do {
-        Start-Sleep -Seconds 30
+        Start-Sleep -Seconds $provingCheckInterval
 
         $response = & "$grpcurl" --plaintext -d '{}' "localhost:$port" spacemesh.v1.PostInfoService.PostStates 2>&1
 
