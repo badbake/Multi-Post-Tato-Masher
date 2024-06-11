@@ -15,7 +15,7 @@ $WindowTitle = "Multi Post-tato Masher TESTNET"
 $host.ui.RawUI.WindowTitle = $WindowTitle
 $grpcurl = Join-Path -Path $PSScriptRoot -ChildPath "grpcurl.exe"
 
-# Define log level (set to INFO by default, can be set to DEBUG, WARNING, ERROR)
+# Define log levels for console and logfile (set to INFO by default, can be set to DEBUG, WARNING, ERROR)
 $global:ConsoleLogLevel = "INFO"
 $global:LogLevel = "DEBUG"
 
@@ -223,6 +223,7 @@ function Run-Instance {
     $provingFound = $false
     $idleFound = $false
     $provingStateReached = $false
+	$shutdownInitiated = $false
 	
     # Log for service.exe
 	$serviceLogFileName = "${instanceName}_service$((Get-Date).ToString('MMddyyyy_HHmm')).txt"
@@ -244,6 +245,8 @@ function Run-Instance {
         return $null
     }
 
+
+	
     do {
         Start-Sleep -Seconds 30
 
@@ -288,10 +291,13 @@ function Run-Instance {
             Log-Message "PoST-Service '$instanceName' is PROVING." "INFO"
             $provingStateReached = $true
             $previousState = "PROVING"
-        } elseif ($idleFound -and $provingStateReached) {
-            Log-Message "PoST-Service '$instanceName' has completed PROVING and the Node has received it. Initiating shutdown." "INFO"
+		} elseif ($shutdownInitiated -eq $true) {
+			Log-Message "Node returning idle for '$instanceName'. Proof is assumed accepted" "INFO"
             Stop-PoST-Service -process $serviceProcess
             return
+        } elseif ($idleFound -and $provingStateReached) {
+            $shutdownInitiated = $true
+			Log-Message "PoST-Service '$instanceName' has completed PROVING. Checking Node..." "INFO"
         } elseif ($provingFound -and $previousState -eq "PROVING") {
             Log-Message "PoST-Service '$instanceName' is still PROVING." "INFO"
         } elseif ($idleFound -and $previousState -ne "IDLE" -and -not $provingStateReached) {
