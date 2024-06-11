@@ -17,7 +17,7 @@ $grpcurl = Join-Path -Path $PSScriptRoot -ChildPath "grpcurl.exe"
 
 # Define log levels for console and logfile (set to INFO by default, can be set to DEBUG, WARNING, ERROR)
 $global:ConsoleLogLevel = "INFO"
-$global:LogLevel = "DEBUG"
+$global:FileLogLevel = "DEBUG"
 
 # Define Log Directory
 $logDirectory = ".\Logs"
@@ -153,7 +153,7 @@ function Log-Message {
     }
 
     # Only log messages that are equal to or higher than the current log level for file output
-    if ($logLevelHierarchy[$level] -ge $logLevelHierarchy[$global:LogLevel]) {
+    if ($logLevelHierarchy[$level] -ge $logLevelHierarchy[$global:FileLogLevel]) {
         $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
         $logMessage = "$timestamp - [$level] - $message"
 
