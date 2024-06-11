@@ -211,7 +211,7 @@ function Colorize-Logs {
 }
 
 # Function to calculate percentage math from postdata_metadata.json
-function ProvingCurlPercentageMath {
+function GetNumUnitsForInstance {
     param (
         [string]$instanceDir
     )
@@ -245,8 +245,8 @@ function Run-Instance {
     $dirArgument = ($arguments -like "--dir=*")[0]
     $instanceDir = $dirArgument.Split("=")[1]
 
-    # Call ProvingCurlPercentageMath to get the NumUnits value
-    $numUnits = ProvingCurlPercentageMath -instanceDir $instanceDir
+    # Call GetNumUnitsForInstance to get the NumUnits value
+    $numUnits = GetNumUnitsForInstance -instanceDir $instanceDir
 
     # Expected responses and Flags
     $idleResponse = '"state": "IDLE"'
