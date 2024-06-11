@@ -262,7 +262,7 @@ function Curl-ProvingProgress {
                     Log-Message "Proving is in Stage 1." "INFO"
                 } elseif ($position -gt 0) {
                     $progressPercentage = [math]::Round(($position / ($numUnits * 68719476736)) * 100, 0)
-					Log-Message "Math Result: $position $numUnits $progressPercentage" "DEBUG"
+					Log-Message "Math Result: ( $position / $numUnits ) x 100 = $progressPercentage" "DEBUG"
                     Log-Message "Proving Post_Data Read: Progress $progressPercentage%" "INFO"
                 }
 
