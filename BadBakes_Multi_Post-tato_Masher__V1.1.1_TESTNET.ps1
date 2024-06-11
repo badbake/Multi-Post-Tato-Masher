@@ -19,7 +19,7 @@ $grpcurl = Join-Path -Path $PSScriptRoot -ChildPath "grpcurl.exe"
 $global:ConsoleLogLevel = "INFO"
 $global:LogLevel = "DEBUG"
 
-# Define user-customizable parameters
+# Define Log Directory
 $logDirectory = ".\Logs"
 if (-not (Test-Path -Path $logDirectory)) {
     New-Item -ItemType Directory -Path $logDirectory
