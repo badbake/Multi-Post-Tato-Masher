@@ -266,12 +266,12 @@ function Curl-ProvingProgress {
                 } elseif ($position -gt 0) {
                     $progressPercentage = [math]::Round(($position / ($numUnits * 68719476736)) * 100, 0)
 					Log-Message "Math Result: ( ${position} / ${numUnits} ) x 100 = ${progressPercentage}" "DEBUG"
-                    Log-Message "Proving Post_Data Read: Progress $progressPercentage%" "INFO"
+                    Log-Message "Proving Post_Data Read: Progress ${progressPercentage}%" "INFO"
                 }
 
                 Start-Sleep -Seconds $provingCheckInterval
             } else {
-                Log-Message "Unexpected JSON structure: $responseContent" "WARNING"
+                Log-Message "Unexpected JSON structure: ${responseContent}" "WARNING"
                 return $null
             }
         } catch {
