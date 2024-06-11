@@ -210,7 +210,7 @@ function Colorize-Logs {
     Write-Host -ForegroundColor $messageColor $message
 }
 
-# Function to calculate percentage math from postdata_metadata.json
+# Function to get # of SU's from postdata_metadata.json
 function GetNumUnitsForInstance {
     param (
         [string]$instanceDir
@@ -230,6 +230,36 @@ function GetNumUnitsForInstance {
         }
     } else {
         Log-Message "Metadata file not found at $metadataFilePath" "ERROR"
+        return $null
+    }
+}
+
+# Function to calculate Proving %
+function Curl-ProvingProgress {
+    param (
+        [string]$operatorAddress
+    )
+
+    $response = Invoke-RestMethod -Uri "http://$operatorAddress/status" -Method Get -ErrorAction Inquire
+    $responseContent = $response.Content
+
+    if ($responseContent -eq "Idle" -or $responseContent -eq "DoneProving") {
+        Log-Message "Received status: $responseContent" "INFO"
+        return $responseContent
+    }
+
+    try {
+        $jsonResponse = $responseContent | ConvertFrom-Json
+        if ($jsonResponse.Proving -and $jsonResponse.Proving.nonces) {
+            $position = $jsonResponse.Proving.position
+            Log-Message "Proving progress position: $position" "INFO"
+            return $position
+        } else {
+            Log-Message "Unexpected JSON structure: $responseContent" "WARNING"
+            return $null
+        }
+    } catch {
+        Log-Message "Failed to parse JSON response: $_" "ERROR"
         return $null
     }
 }
