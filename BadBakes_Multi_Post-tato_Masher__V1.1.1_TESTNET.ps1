@@ -210,11 +210,43 @@ function Colorize-Logs {
     Write-Host -ForegroundColor $messageColor $message
 }
 
+# Function to calculate percentage math from postdata_metadata.json
+function ProvingCurlPercentageMath {
+    param (
+        [string]$instanceDir
+    )
+    
+    $metadataFilePath = Join-Path -Path $instanceDir -ChildPath "postdata_metadata.json"
+
+    if (Test-Path -Path $metadataFilePath) {
+        try {
+            $metadataContent = Get-Content -Path $metadataFilePath | ConvertFrom-Json
+            $numUnits = $metadataContent.NumUnits
+            Log-Message "NumUnits for $instanceName: $numUnits" "INFO"
+            return $numUnits
+        } catch {
+            Log-Message "Failed to read or parse $metadataFilePath: $_" "ERROR"
+            return $null
+        }
+    } else {
+        Log-Message "Metadata file not found at $metadataFilePath" "ERROR"
+        return $null
+    }
+}
+
+
 function Run-Instance {
     param (
         [string]$instanceName,
         [string[]]$arguments
     )
+
+    # Extract directory from the arguments
+    $dirArgument = ($arguments -like "--dir=*")[0]
+    $instanceDir = $dirArgument.Split("=")[1]
+
+    # Call ProvingCurlPercentageMath to get the NumUnits value
+    $numUnits = ProvingCurlPercentageMath -instanceDir $instanceDir
 
     # Expected responses and Flags
     $idleResponse = '"state": "IDLE"'
