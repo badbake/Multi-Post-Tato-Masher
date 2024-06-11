@@ -16,7 +16,8 @@ $host.ui.RawUI.WindowTitle = $WindowTitle
 $grpcurl = Join-Path -Path $PSScriptRoot -ChildPath "grpcurl.exe"
 
 # Define log level (set to INFO by default, can be set to DEBUG, WARNING, ERROR)
-$global:LogLevel = "INFO"
+$global:ConsoleLogLevel = "INFO"
+$global:LogLevel = "DEBUG"
 
 # Define user-customizable parameters
 $logDirectory = ".\Logs"
@@ -79,6 +80,56 @@ $instances = @{
             "--randomx-mode=fast"
         )
     }
+    "Post6" = @{									
+        Arguments = @(
+            "--address=http://localhost:9094",
+            "--dir=./Post6",						
+            "--operator-address=127.0.0.1:50056",
+            "--threads=1",
+            "--nonces=128",
+            "--randomx-mode=fast"
+        )
+    }
+    "Post7" = @{									
+        Arguments = @(
+            "--address=http://localhost:9094",
+            "--dir=./Post7",						
+            "--operator-address=127.0.0.1:50057",
+            "--threads=1",
+            "--nonces=128",
+            "--randomx-mode=fast"
+        )
+    }
+    "Post8" = @{									
+        Arguments = @(
+            "--address=http://localhost:9094",
+            "--dir=./Post8",						
+            "--operator-address=127.0.0.1:50058",
+            "--threads=1",
+            "--nonces=128",
+            "--randomx-mode=fast"
+        )
+    }
+    "Post9" = @{									
+        Arguments = @(
+            "--address=http://localhost:9094",
+            "--dir=./Post9",						
+            "--operator-address=127.0.0.1:50059",
+            "--threads=1",
+            "--nonces=128",
+            "--randomx-mode=fast"
+        )
+    }
+    "Post10" = @{									
+        Arguments = @(
+            "--address=http://localhost:9094",
+            "--dir=./Post10",						
+            "--operator-address=127.0.0.1:50060",
+            "--threads=1",
+            "--nonces=128",
+            "--randomx-mode=fast"
+        )
+    }
 
     # Add/Remove Posts with names and arguments for all Post Services needed.
 }
@@ -87,7 +138,7 @@ $instances = @{
 function Log-Message {
     param (
         [string]$message,
-        [string]$level = "INFO"  # Default level is INFO
+        [string]$level = "INFO"  # Default level is INFO for log file
     )
 
     # Define the log level hierarchy
@@ -98,18 +149,22 @@ function Log-Message {
         "ERROR" = 4
     }
 
-    # Only log messages that are equal to or higher than the current log level
+    # Only log messages that are equal to or higher than the current log level for file output
     if ($logLevelHierarchy[$level] -ge $logLevelHierarchy[$global:LogLevel]) {
         $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
         $logMessage = "$timestamp - [$level] - $message"
 
-        # Write the log message to the console with colors
-        Colorize-Logs -message $message -level $level -timestamp $timestamp
-
-        # Also write to the log file without colors
+        # Write to the log file without colors
         $logMessage | Out-File -Append -FilePath $logFilePath
     }
+
+    # Only log messages that are equal to or higher than the current log level for console output
+    if ($logLevelHierarchy[$level] -ge $logLevelHierarchy[$global:ConsoleLogLevel]) {
+        # Colorize and write the log message to the console
+        Colorize-Logs -message $message -level $level -timestamp $timestamp
+    }
 }
+
 
 # Function to display colorized logs in the console
 function Colorize-Logs {
@@ -412,7 +467,8 @@ function Update-ConsoleWithRemainingTime {
 
         # Exit the loop when the time difference is less than or equal to zero
         if ($timeDifference.TotalSeconds -le 1) {
-            Log-Message "Running POST Services" "INFO"
+            Write-Host
+			Log-Message "Running POST Services" "INFO"
 			break
         }
     }
