@@ -242,7 +242,7 @@ function Curl-ProvingProgress {
     )
 
     while ($true) {
-        $response = Invoke-RestMethod -Uri "http://$operatorAddress/status" -Method Get -ErrorAction Stop
+        $response = Invoke-RestMethod -Uri "http://$operatorAddress/status" -Method Get -ErrorAction Inquire
         $responseContent = $response.Content
 
         if ($responseContent -eq "Idle") {
@@ -261,7 +261,8 @@ function Curl-ProvingProgress {
                 if ($position -eq 0) {
                     Log-Message "Proving is in Stage 1." "INFO"
                 } elseif ($position -gt 0) {
-                    $progressPercentage = [math]::Round(($position / $numUnits) * 100, 2)
+                    $progressPercentage = [math]::Round(($position / ($numUnits * 68719476736)) * 100, 0)
+					Log-Message "Math Result: $position $numUnits $progressPercentage" "DEBUG"
                     Log-Message "Proving Post_Data Read: Progress $progressPercentage%" "INFO"
                 }
 
