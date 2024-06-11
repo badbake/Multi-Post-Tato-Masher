@@ -16,7 +16,7 @@ $host.ui.RawUI.WindowTitle = $WindowTitle
 $grpcurl = Join-Path -Path $PSScriptRoot -ChildPath "grpcurl.exe"
 
 # Define log levels for console and logfile (set to INFO by default, can be set to DEBUG, WARNING, ERROR)
-$global:ConsoleLogLevel = "INFO"
+$global:ConsoleLogLevel = "DEBUG"
 $global:FileLogLevel = "DEBUG"
 
 # Define Log Directory
@@ -245,19 +245,20 @@ function Curl-ProvingProgress {
     )
 
     while ($true) {
-        $response = Invoke-RestMethod -Uri "http://$operatorAddress/status" -Method Get -ErrorAction Inquire
-        $responseContent = $response.Content
+        $response = Invoke-Expression ("curl http://$operatorAddress/status") 2>$null -ErrorAction Inquire
+		Log-Message " $($response) " "DEBUG"
 
-        if ($responseContent -eq "Idle") {
+        if ($response -eq "Idle") {
             Log-Message "Proving process returned to Idle state" "INFO"
             return "Idle"
-        } elseif ($responseContent -eq "DoneProving") {
+        } elseif ($response -eq "DoneProving") {
             Log-Message "Proving process completed" "INFO"
             return "DoneProving"
-        }
-
+        } elseif ($postStatus -match '^{.*}$') {
+            $response | ConvertFrom-Json
+		}
         try {
-            $jsonResponse = $responseContent | ConvertFrom-Json
+            $jsonResponse = $response | ConvertFrom-Json
             if ($jsonResponse.Proving -and $jsonResponse.Proving.nonces) {
                 $position = $jsonResponse.Proving.position
 
@@ -265,13 +266,13 @@ function Curl-ProvingProgress {
                     Log-Message "Proving is in Stage 1." "INFO"
                 } elseif ($position -gt 0) {
                     $progressPercentage = [math]::Round(($position / ($numUnits * 68719476736)) * 100, 0)
-					Log-Message "Math Result: ( ${position} / ${numUnits} ) x 100 = ${progressPercentage}" "DEBUG"
-                    Log-Message "Proving Post_Data Read: Progress ${progressPercentage}%" "INFO"
+					Log-Message "Math Result: ( $($position) / $($numUnits) ) x 100 = $($progressPercentage)" "DEBUG"
+                    Log-Message "Proving Post_Data Read: Progress $($progressPercentage)%" "INFO"
                 }
 
                 Start-Sleep -Seconds $provingCheckInterval
             } else {
-                Log-Message "Unexpected JSON structure: ${responseContent}" "WARNING"
+                Log-Message "Unexpected JSON structure: $($response) $($jsonResponse) " "WARNING"
                 return $null
             }
         } catch {
