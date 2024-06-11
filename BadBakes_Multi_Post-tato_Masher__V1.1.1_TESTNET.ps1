@@ -237,32 +237,46 @@ function GetNumUnitsForInstance {
 # Function to calculate Proving %
 function Curl-ProvingProgress {
     param (
-        [string]$operatorAddress
+        [string]$operatorAddress,
+        [int]$numUnits
     )
 
-    $response = Invoke-RestMethod -Uri "http://$operatorAddress/status" -Method Get -ErrorAction Inquire
-    $responseContent = $response.Content
+    while ($true) {
+        $response = Invoke-RestMethod -Uri "http://$operatorAddress/status" -Method Get -ErrorAction Stop
+        $responseContent = $response.Content
 
-    if ($responseContent -eq "Idle" -or $responseContent -eq "DoneProving") {
-        Log-Message "Received status: $responseContent" "INFO"
-        return $responseContent
-    }
+        if ($responseContent -eq "Idle") {
+            Log-Message "Proving process returned to Idle state" "INFO"
+            return "Idle"
+        } elseif ($responseContent -eq "DoneProving") {
+            Log-Message "Proving process completed" "INFO"
+            return "DoneProving"
+        }
 
-    try {
-        $jsonResponse = $responseContent | ConvertFrom-Json
-        if ($jsonResponse.Proving -and $jsonResponse.Proving.nonces) {
-            $position = $jsonResponse.Proving.position
-            Log-Message "Proving progress position: $position" "INFO"
-            return $position
-        } else {
-            Log-Message "Unexpected JSON structure: $responseContent" "WARNING"
+        try {
+            $jsonResponse = $responseContent | ConvertFrom-Json
+            if ($jsonResponse.Proving -and $jsonResponse.Proving.nonces) {
+                $position = $jsonResponse.Proving.position
+
+                if ($position -eq 0) {
+                    Log-Message "Proving is in Stage 1." "INFO"
+                } elseif ($position -gt 0) {
+                    $progressPercentage = [math]::Round(($position / $numUnits) * 100, 2)
+                    Log-Message "Proving Post_Data Read: Progress $progressPercentage%" "INFO"
+                }
+
+                Start-Sleep -Seconds 30
+            } else {
+                Log-Message "Unexpected JSON structure: $responseContent" "WARNING"
+                return $null
+            }
+        } catch {
+            Log-Message "Failed to parse JSON response: $_" "ERROR"
             return $null
         }
-    } catch {
-        Log-Message "Failed to parse JSON response: $_" "ERROR"
-        return $null
     }
 }
+
 
 
 function Run-Instance {
@@ -285,11 +299,11 @@ function Run-Instance {
     $provingFound = $false
     $idleFound = $false
     $provingStateReached = $false
-	$shutdownInitiated = $false
-	
+    $shutdownInitiated = $false
+
     # Log for service.exe
-	$serviceLogFileName = "${instanceName}_service$((Get-Date).ToString('MMddyyyy_HHmm')).txt"
-	$serviceLogFilePath = Join-Path -Path $logDirectory -ChildPath $serviceLogFileName
+    $serviceLogFileName = "${instanceName}_service$((Get-Date).ToString('MMddyyyy_HHmm')).txt"
+    $serviceLogFilePath = Join-Path -Path $logDirectory -ChildPath $serviceLogFileName
 
     # Extract port number from the address argument
     $addressArgument = ($arguments -like "--address=*")[0]
@@ -307,8 +321,6 @@ function Run-Instance {
         return $null
     }
 
-
-	
     do {
         Start-Sleep -Seconds 30
 
@@ -353,15 +365,16 @@ function Run-Instance {
             Log-Message "PoST-Service '$instanceName' is PROVING." "INFO"
             $provingStateReached = $true
             $previousState = "PROVING"
-		} elseif ($shutdownInitiated -eq $true) {
-			Log-Message "Node returning idle for '$instanceName'. Proof is assumed accepted" "INFO"
+        } elseif ($shutdownInitiated -eq $true) {
+            Log-Message "Node returning idle for '$instanceName'. Proof is assumed accepted" "INFO"
             Stop-PoST-Service -process $serviceProcess
             return
         } elseif ($idleFound -and $provingStateReached) {
             $shutdownInitiated = $true
-			Log-Message "PoST-Service '$instanceName' has completed PROVING. Checking Node..." "INFO"
+            Log-Message "PoST-Service '$instanceName' has completed PROVING. Checking Node..." "INFO"
         } elseif ($provingFound -and $previousState -eq "PROVING") {
-            Log-Message "PoST-Service '$instanceName' is still PROVING." "INFO"
+            # Call the Curl-ProvingProgress function instead of logging
+            Curl-ProvingProgress -operatorAddress $operatorAddress -numUnits $numUnits
         } elseif ($idleFound -and $previousState -ne "IDLE" -and -not $provingStateReached) {
             Log-Message "PoST-Service '$instanceName' is in the IDLE state." "INFO"
             $previousState = "IDLE"
@@ -370,6 +383,7 @@ function Run-Instance {
         }
     } while ($true)
 }
+
 
 
 # Function to initiate a graceful shutdown of the process
