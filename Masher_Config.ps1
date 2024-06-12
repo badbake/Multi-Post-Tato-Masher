@@ -17,6 +17,10 @@ $FileLogLevel = "DEBUG"
 # Set Interval in seconds for Checking Post Service Status while running.
 $provingCheckInterval = 30
 
+# Define the variable to clear service log files
+$clearServiceLogFiles = $true
+
+
 # Define configurations for each set of POST Data. 
 $instances = @{
     "Post1" = @{									#Name of each instance must match the identity.key associaited with that POST data set. (Example - Post1 for use with Post1.key.) 

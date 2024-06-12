@@ -270,6 +270,28 @@ function Run-Instance {
     } while ($true)
 }
 
+# Function to clear service log files
+function Clear-ServiceLogFiles {
+    param (
+        [string]$logDirectory,
+        [string[]]$instances
+    )
+    
+    foreach ($instanceName in $instances) {
+        $logFilesPattern = "${instanceName}_service*.txt"
+        $logFiles = Get-ChildItem -Path $logDirectory -Filter $logFilesPattern
+        
+        foreach ($logFile in $logFiles) {
+            try {
+                Remove-Item -Path $logFile.FullName -Force
+                Log-Message "Cleared log file: $($logFile.FullName)" "INFO"
+            } catch {
+                Log-Message "Failed to delete log file: $($logFile.FullName). Error: $_" "ERROR"
+            }
+        }
+    }
+}
+
 
 # Function to initiate a graceful shutdown of the process
 function Stop-PoST-Service {
@@ -353,7 +375,7 @@ function Run-AllInstances {
 
     $instancesInProvingState = $false
     Log-Message "All Instances Ran. Re-Checking all Instances for PROVING state." "INFO"
-	
+    
     foreach ($instanceName in $instances.Keys) {
         $instance = $instances[$instanceName]
         Log-Message "Checking State of '$instanceName'." "DEBUG"
@@ -369,7 +391,12 @@ function Run-AllInstances {
         Log-Message "All PoST-Service's showing IDLE." "INFO"
         Log-Message "All PoST-Service's have completed proving." "INFO"
     }
+
+    if ($clearServiceLogFiles) {
+        Clear-ServiceLogFiles -logDirectory $logDirectory -instances $instances.Keys
+    }
 }
+
 
 
 
