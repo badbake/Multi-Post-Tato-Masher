@@ -39,7 +39,7 @@ $instances = @{
             "--dir=./Post1",						#Post Data Directory, Set for each different set of Post Data.
             "--operator-address=127.0.0.1:50051",	#Operator API
             "--threads=1",							#Proving Options based on your hardware
-            "--nonces=128",							#Proving Options based on your hardware
+            "--nonces=64",							#Proving Options based on your hardware
             "--randomx-mode=fast"					#Proving Options based on your hardware
         )
     }
@@ -49,7 +49,7 @@ $instances = @{
             "--dir=./Post2",						#Set for Post DataDirectory 2
             "--operator-address=127.0.0.1:50052",
             "--threads=1",
-            "--nonces=128",
+            "--nonces=64",
             "--randomx-mode=fast"
         )
     }
@@ -59,7 +59,7 @@ $instances = @{
             "--dir=./Post3",						
             "--operator-address=127.0.0.1:50053",
             "--threads=1",
-            "--nonces=128",
+            "--nonces=64",
             "--randomx-mode=fast"
         )
     }
@@ -69,7 +69,7 @@ $instances = @{
             "--dir=./Post4",						
             "--operator-address=127.0.0.1:50054",
             "--threads=1",
-            "--nonces=128",
+            "--nonces=64",
             "--randomx-mode=fast"
         )
     }
@@ -79,7 +79,7 @@ $instances = @{
             "--dir=./Post5",						
             "--operator-address=127.0.0.1:50055",
             "--threads=1",
-            "--nonces=128",
+            "--nonces=64",
             "--randomx-mode=fast"
         )
     }
@@ -89,8 +89,8 @@ $instances = @{
             "--dir=./Post6",						
             "--operator-address=127.0.0.1:50056",
             "--threads=1",
-            "--nonces=128",
-            "--randomx-mode=fast"
+            "--nonces=64",
+            "--randomx-mode=light"
         )
     }
     "Post7" = @{									
@@ -99,8 +99,8 @@ $instances = @{
             "--dir=./Post7",						
             "--operator-address=127.0.0.1:50057",
             "--threads=1",
-            "--nonces=128",
-            "--randomx-mode=fast"
+            "--nonces=64",
+            "--randomx-mode=light"
         )
     }
     "Post8" = @{									
@@ -109,7 +109,7 @@ $instances = @{
             "--dir=./Post8",						
             "--operator-address=127.0.0.1:50058",
             "--threads=1",
-            "--nonces=128",
+            "--nonces=64",
             "--randomx-mode=fast"
         )
     }
@@ -119,7 +119,7 @@ $instances = @{
             "--dir=./Post9",						
             "--operator-address=127.0.0.1:50059",
             "--threads=1",
-            "--nonces=128",
+            "--nonces=64",
             "--randomx-mode=fast"
         )
     }
@@ -129,7 +129,7 @@ $instances = @{
             "--dir=./Post10",						
             "--operator-address=127.0.0.1:50060",
             "--threads=1",
-            "--nonces=128",
+            "--nonces=64",
             "--randomx-mode=fast"
         )
     }
