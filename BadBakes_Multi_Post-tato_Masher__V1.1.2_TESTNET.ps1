@@ -167,8 +167,6 @@ function Curl-ProvingProgress {
     }
 }
 
-
-
 function Run-Instance {
     param (
         [string]$instanceName,
@@ -194,6 +192,7 @@ function Run-Instance {
     $idleFound = $false
     $provingStateReached = $false
     $shutdownInitiated = $false
+    $idleCounter = 0 # Initialize the idle counter
 
     # Log for service.exe
     $serviceLogFileName = "${instanceName}_service$((Get-Date).ToString('MMddyyyy_HHmm')).txt"
@@ -259,23 +258,31 @@ function Run-Instance {
             Log-Message "PoST-Service '$instanceName' is PROVING." "INFO"
             $provingStateReached = $true
             $previousState = "PROVING"
+            $idleCounter = 0 # Reset idle counter
         } elseif ($shutdownInitiated -eq $true) {
             Log-Message "Node returning idle for '$instanceName'. Proof is assumed accepted" "INFO"
             Stop-PoST-Service -process $serviceProcess
             return
         } elseif ($provingFound -and $previousState -eq "PROVING") {
             Curl-ProvingProgress -operatorAddress $operatorAddress -numUnits $numUnits
-			$shutdownInitiated = $true
+            $shutdownInitiated = $true
             Log-Message "PoST-Service '$instanceName' has completed PROVING. Checking Node..." "INFO"
         } elseif ($idleFound -and $previousState -ne "IDLE" -and -not $provingStateReached) {
             Log-Message "PoST-Service '$instanceName' is in the IDLE state." "INFO"
             $previousState = "IDLE"
+            $idleCounter = 0 # Reset idle counter
         } elseif ($idleFound -and $previousState -eq "IDLE") {
-            Log-Message "PoST-Service '$instanceName' continues to be in the IDLE state." "INFO"
+            $idleCounter++ # Increment idle counter
+            Log-Message "PoST-Service '$instanceName' continues to be in the IDLE state. Idle count: $idleCounter" "INFO"
+            if ($idleCounter -ge 4) {
+                $shutdownInitiated = $true
+                Log-Message "PoST-Service '$instanceName' idle state detected 4 times. Initiating shutdown." "INFO"
+                Stop-PoST-Service -process $serviceProcess
+                return
+            }
         }
     } while ($true)
 }
-
 
 
 # Function to initiate a graceful shutdown of the process
