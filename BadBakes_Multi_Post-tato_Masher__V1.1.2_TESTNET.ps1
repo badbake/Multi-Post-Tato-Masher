@@ -1,3 +1,18 @@
+# Set the window title and load configuration settings
+$WindowTitle = "Multi Post-tato Masher TESTNET"
+$host.ui.RawUI.WindowTitle = $WindowTitle
+. ".\Masher_Config.ps1"
+
+# Ensure log directory exists and initialize log file path
+$logDirectory = ".\Logs"
+if (-not (Test-Path -Path $logDirectory)) {
+    New-Item -ItemType Directory -Path $logDirectory
+}
+$logFileName = "PostMasher$((Get-Date).ToString('MMddyyyy_HHmm')).txt"
+$logFilePath = Join-Path -Path $logDirectory -ChildPath $logFileName
+
+
+
 <#
 .SYNOPSIS
     Script for orchestrating multiple PoST Proving service instances, sequentially, based on cycle gap timing.
@@ -9,17 +24,6 @@
     Version: 1.1.1
     Last Updated: 2024-06-11
 #>
-
-$WindowTitle = "Multi Post-tato Masher TESTNET"
-$host.ui.RawUI.WindowTitle = $WindowTitle
-. ".\Masher_Config.ps1"
-$logDirectory = ".\Logs"
-if (-not (Test-Path -Path $logDirectory)) {
-    New-Item -ItemType Directory -Path $logDirectory
-}
-$logFileName = "PostMasher$((Get-Date).ToString('MMddyyyy_HHmm')).txt"
-$logFilePath = Join-Path -Path $logDirectory -ChildPath $logFileName
-
 
 # Function to log messages with timestamp and log level
 function Log-Message {
@@ -46,6 +50,7 @@ function Log-Message {
     }
 }
 
+# Function to display colorized logs in the console
 function Colorize-Logs {
     param (
         [string]$message,
@@ -112,6 +117,7 @@ function GetNumUnitsForInstance {
     }
 }
 
+# Function to calculate Proving progress
 function Curl-ProvingProgress {
     param (
         [string]$operatorAddress,
@@ -158,6 +164,7 @@ function Curl-ProvingProgress {
     }
 }
 
+# Function to run a PoST service instance with the specified arguments
 function Run-Instance {
     param (
         [string]$instanceName,
@@ -298,6 +305,7 @@ function Stop-PoST-Service {
     }
 }
 
+# Function to check the state of an instance
 function Check-InstanceState {
     param (
         [PSCustomObject]$instance,
@@ -429,6 +437,7 @@ function Wait-ForTrigger {
     }
 }
 
+# Function to check for PROVING states and run corresponding instances
 function Check-And-Run-ProvingInstances {
     $provingInstancesFound = $false
     
