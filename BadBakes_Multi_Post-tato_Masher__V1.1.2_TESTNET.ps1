@@ -10,15 +10,9 @@
     Last Updated: 2024-06-11
 #>
 
-# Set the window title
 $WindowTitle = "Multi Post-tato Masher TESTNET"
 $host.ui.RawUI.WindowTitle = $WindowTitle
-$grpcurl = ".\grpcurl.exe"
-
-# Read configuration from config.ps1 file. Same directory as this script by default and logic.
 . ".\Masher_Config.ps1"
-
-# Define Log Directory
 $logDirectory = ".\Logs"
 if (-not (Test-Path -Path $logDirectory)) {
     New-Item -ItemType Directory -Path $logDirectory

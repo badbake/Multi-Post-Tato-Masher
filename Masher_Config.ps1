@@ -1,3 +1,12 @@
+<#
+.SYNOPSIS
+    Config for Multi Post-Tato Masher
+.DESCRIPTION
+    Contains all User configurable information to run Multi-Post-Tato-Masher for their environments.
+.NOTES
+    File Name: Masher_Config.ps1
+#>
+
 #Define location of grpcurl.exe. Default is directory script is ran from.
 $grpcurl = ".\grpcurl.exe"
 
