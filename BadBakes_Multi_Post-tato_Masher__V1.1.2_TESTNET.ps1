@@ -439,7 +439,7 @@ function Update-ConsoleWithRemainingTime {
         $remainingSeconds = $timeDifference.Seconds
 
         # Format the remaining time
-        $formattedRemainingTime = 'Days={0} Hours={1:00} Minutes={2:00}:{3:00}' -f $remainingDays, $remainingHours, $remainingMinutes, $remainingSeconds
+        $formattedRemainingTime = 'Days={0} Hours={1:00} Minutes={2:00} Seconds={3:00}' -f $remainingDays, $remainingHours, $remainingMinutes, $remainingSeconds
 
 
         # Update console with the remaining time
