@@ -534,7 +534,7 @@ function Calculate-NextTriggerTime {
     }
 
     # Log the next trigger date and time
-    Log-Message "Next Cycle Gap: $nextTriggerDateTimeLocal"
+    Log-Message "Next Cycle Gap: $($nextTriggerDateTimeLocal.ToString('MM/dd/yyyy hh:mm:ss tt'))" "INFO"
     # Return the next trigger date and time
     return $nextTriggerDateTimeLocal
 }
@@ -555,7 +555,7 @@ function Update-ConsoleWithRemainingTime {
         $remainingSeconds = $timeDifference.Seconds
 
         # Format the remaining time
-        $formattedRemainingTime = '{0}:{1:00}:{2:00}' -f ($remainingDays * 24 + $remainingHours), $remainingMinutes, $remainingSeconds
+        $formattedRemainingTime = '{0}:Days {1:00}:Hours {2:00}:Minutes {3:00}:Seconds' -f $remainingDays, $remainingHours, $remainingMinutes, $remainingSeconds
 
         # Update console with the remaining time
         Write-Host -NoNewline "`r                             - Time Remaining: $formattedRemainingTime"
