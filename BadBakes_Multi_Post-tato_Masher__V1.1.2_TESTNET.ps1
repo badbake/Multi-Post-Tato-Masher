@@ -270,6 +270,56 @@ function Run-Instance {
     } while ($true)
 }
 
+# Function to read proving data from service log files
+function ReadProvingData {
+    param (
+        [string]$logDirectory,
+        [string[]]$instances
+    )
+
+    foreach ($instanceName in $instances) {
+        $logFilesPattern = "${instanceName}_service*.txt"
+        $logFiles = Get-ChildItem -Path $logDirectory -Filter $logFilesPattern
+        
+        foreach ($logFile in $logFiles) {
+            try {
+                $logContent = Get-Content -Path $logFile.FullName
+                $k2ptime = $logContent | Select-String -Pattern "INFO  post::prove\] finished k2pow in ([0-9]+m [0-9]+s)"
+                $postdatareadtime = $logContent | Select-String -Pattern "INFO  post::prove\] finished reading POST data in ([0-9]+m [0-9]+s)"
+                $totalprooftime = $logContent | Select-String -Pattern "INFO  post::prove\] found proof .* It took ([0-9]+m [0-9]+s)"
+                $verifytime = $logContent | Select-String -Pattern "INFO  post_service::client\] proof is valid \(verification took: ([0-9]+\.[0-9]+s)\)"
+                
+                if ($k2ptime) {
+                    $k2ptimeValue = $k2ptime.Matches[0].Groups[1].Value
+                    Log-Message "k2ptime for ${instanceName}: ${k2ptimeValue}" "DEBUG"
+                    Log-Message "finished k2pow in ${k2ptimeValue} for ${instanceName}" "INFO"
+                }
+
+                if ($postdatareadtime) {
+                    $postdatareadtimeValue = $postdatareadtime.Matches[0].Groups[1].Value
+                    Log-Message "postdatareadtime for ${instanceName}: ${postdatareadtimeValue}" "DEBUG"
+                    Log-Message "finished reading POST data in ${postdatareadtimeValue} for ${instanceName}" "INFO"
+                }
+
+                if ($totalprooftime) {
+                    $totalprooftimeValue = $totalprooftime.Matches[0].Groups[1].Value
+                    Log-Message "totalprooftime for ${instanceName}: ${totalprooftimeValue}" "DEBUG"
+                    Log-Message "Proof created for ${instanceName}, it took ${totalprooftimeValue}" "INFO"
+                }
+
+                if ($verifytime) {
+                    $verifytimeValue = $verifytime.Matches[0].Groups[1].Value
+                    Log-Message "verifytime for ${instanceName}: ${verifytimeValue}" "DEBUG"
+                    Log-Message "Proof verification took ${verifytimeValue} for ${instanceName}" "INFO"
+                }
+            } catch {
+                Log-Message "Failed to read or parse log file: $($logFile.FullName) for ${instanceName}. Error: $_" "ERROR"
+            }
+        }
+    }
+}
+
+
 # Function to clear service log files
 function Clear-ServiceLogFiles {
     param (
@@ -291,7 +341,6 @@ function Clear-ServiceLogFiles {
         }
     }
 }
-
 
 # Function to initiate a graceful shutdown of the process
 function Stop-PoST-Service {
@@ -391,6 +440,9 @@ function Run-AllInstances {
         Log-Message "All PoST-Service's showing IDLE." "INFO"
         Log-Message "All PoST-Service's have completed proving." "INFO"
     }
+
+    # Read proving data from log files
+    ReadProvingData -logDirectory $logDirectory -instances $instances.Keys
 
     if ($clearServiceLogFiles) {
         Clear-ServiceLogFiles -logDirectory $logDirectory -instances $instances.Keys
