@@ -179,27 +179,27 @@ function Colorize-Logs {
 
     switch ($level) {
         "INFO" {
-            $timestampColor = "Green"
-            $levelColor = "Cyan"
-            $messageColor = "Gray"
+            $timestampColor = "DarkBlue"
+            $levelColor = "DarkCyan"
+            $messageColor = "White"
         }
         "WARNING" {
-            $timestampColor = "Green"
+            $timestampColor = "DarkBlue"
             $levelColor = "Yellow"
             $messageColor = "Gray"
         }
         "DEBUG" {
-            $timestampColor = "Green"
+            $timestampColor = "DarkBlue"
             $levelColor = "DarkYellow"
             $messageColor = "Gray"
         }
         "ERROR" {
-            $timestampColor = "Green"
-            $levelColor = "Red"
-            $messageColor = "Gray"
+            $timestampColor = "Red"
+            $levelColor = "DarkRed"
+            $messageColor = "Red"
         }
         default {
-            $timestampColor = "Green"
+            $timestampColor = "DarkBlue"
             $levelColor = "White"
             $messageColor = "Gray"
         }
@@ -207,7 +207,7 @@ function Colorize-Logs {
 
     # Print the log message with color
     Write-Host -NoNewline -ForegroundColor $timestampColor $timestamp
-    Write-Host -NoNewline " - "
+    Write-Host -NoNewline " : "
     Write-Host -NoNewline -ForegroundColor $levelColor "[$level]"
     Write-Host -NoNewline " - "
     Write-Host -ForegroundColor $messageColor $message
@@ -380,7 +380,6 @@ function Run-Instance {
             Stop-PoST-Service -process $serviceProcess
             return
         } elseif ($provingFound -and $previousState -eq "PROVING") {
-            # Call the Curl-ProvingProgress function instead of logging
             Curl-ProvingProgress -operatorAddress $operatorAddress -numUnits $numUnits
 			$shutdownInitiated = $true
             Log-Message "PoST-Service '$instanceName' has completed PROVING. Checking Node..." "INFO"
@@ -441,12 +440,13 @@ function Run-AllInstances {
 
     # Check if any instances are still in PROVING state and run them again
     $instancesInProvingState = $false
+	Log-Message "All Instances Ran. Re-Checking all Instances for PROVING state." "INFO"
 	
     foreach ($instanceName in $instances.Keys) {
         $instance = $instances[$instanceName]
 		
 		# Display Message
-		Log-Message "Checking State of '$instanceName'." "INFO"
+		Log-Message "Checking State of '$instanceName'." "DEBUG"
 
         try {
             # Extract port number from the address argument
@@ -482,15 +482,14 @@ function Run-AllInstances {
                 if ($state.name -eq "$instanceName.key") {  # Check if the name exactly matches the instance name with ".key" suffix
                     Log-Message "Instance name '$instanceName' matched in the response." "DEBUG"
                     if ($state.state -eq "PROVING") {
-                        $provingInstancesFound = $true
+                        $instancesInProvingState = $true
                         Log-Message "PROVING state found. Running PoST-Service for '$instanceName'." "INFO"
                         Run-Instance -instanceName $instanceName -arguments $instance.Arguments
                     } elseif ($state.state -eq "IDLE") {
-                        Log-Message "'$instanceName' shows IDLE." "INFO"
+                        Log-Message "'$instanceName' shows IDLE." "DEBUG"
                     } else {
                         Log-Message "Unknown state for instance '$instanceName'." "WARNING"
                     }
-                    # Break out of the loop once the correct instance is found
                     break
                 }
             }
@@ -499,8 +498,11 @@ function Run-AllInstances {
             Log-Message "Error occurred while checking state for instance '$instanceName': $_" "ERROR"
         }
     }
-
-    Log-Message "All POST Services have completed proofs." "INFO"
+    # If no instances requiring proof were found after running and checking again. Proceed.
+    if (-not $instancesInProvingState) {
+        Log-Message "All PoST-Service's showing IDLE." "INFO"
+		Log-Message "All PoST-Service's have completed proving." "INFO"
+    }
 }
 
 
@@ -629,7 +631,7 @@ function Check-And-Run-ProvingInstances {
                         Log-Message "PROVING state found. Running PoST-Service for '$instanceName'." "INFO"
                         Run-Instance -instanceName $instanceName -arguments $instance.Arguments
                     } elseif ($state.state -eq "IDLE") {
-                        Log-Message "'$instanceName' shows IDLE." "INFO"
+                        Log-Message "'$instanceName' shows IDLE." "DEBUG"
                     } else {
                         Log-Message "Unknown state for instance '$instanceName'." "WARNING"
                     }
