@@ -250,10 +250,10 @@ function Curl-ProvingProgress {
 
         if ($response -match "Idle") {
             Log-Message "Proving process returned to Idle state" "INFO"
-            return "Idle"
+            return
         } elseif ($response -match "DoneProving") {
             Log-Message "Proving process completed" "INFO"
-            return "DoneProving"
+            return
         } elseif ($postStatus -match '^{.*}$') {
             $response | ConvertFrom-Json
 		}
