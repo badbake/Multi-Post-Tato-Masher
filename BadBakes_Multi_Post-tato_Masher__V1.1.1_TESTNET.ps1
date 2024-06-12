@@ -555,7 +555,7 @@ function Update-ConsoleWithRemainingTime {
         $remainingSeconds = $timeDifference.Seconds
 
         # Format the remaining time
-        $formattedRemainingTime = '{0}:Days {1:00}:Hours {2:00}:Minutes {3:00}:Seconds' -f $remainingDays, $remainingHours, $remainingMinutes, $remainingSeconds
+        $formattedRemainingTime = 'Days={0} Hours={1:00} Minutes={2:00}:{3:00}' -f $remainingDays, $remainingHours, $remainingMinutes, $remainingSeconds
 
         # Update console with the remaining time
         Write-Host -NoNewline "`r                             - Time Remaining: $formattedRemainingTime"
