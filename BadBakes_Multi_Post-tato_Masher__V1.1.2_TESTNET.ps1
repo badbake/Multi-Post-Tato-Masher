@@ -13,7 +13,7 @@
 # Set the window title
 $WindowTitle = "Multi Post-tato Masher TESTNET"
 $host.ui.RawUI.WindowTitle = $WindowTitle
-$grpcurl = Join-Path -Path $PSScriptRoot -ChildPath "grpcurl.exe"
+$grpcurl = ".\grpcurl.exe"
 
 # Read configuration from config.ps1 file. Same directory as this script by default and logic.
 . ".\Masher_Config.ps1"
