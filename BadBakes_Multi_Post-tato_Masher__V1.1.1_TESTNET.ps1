@@ -16,7 +16,7 @@ $host.ui.RawUI.WindowTitle = $WindowTitle
 $grpcurl = Join-Path -Path $PSScriptRoot -ChildPath "grpcurl.exe"
 
 # Define log levels for console and logfile (set to INFO by default, can be set to DEBUG, WARNING, ERROR)
-$global:ConsoleLogLevel = "DEBUG"
+$global:ConsoleLogLevel = "INFO"
 $global:FileLogLevel = "DEBUG"
 
 # Define Log Directory
