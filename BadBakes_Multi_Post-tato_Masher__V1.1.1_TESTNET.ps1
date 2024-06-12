@@ -90,7 +90,7 @@ $instances = @{
             "--operator-address=127.0.0.1:50056",
             "--threads=1",
             "--nonces=64",
-            "--randomx-mode=light"
+            "--randomx-mode=fast"
         )
     }
     "Post7" = @{									
@@ -100,7 +100,7 @@ $instances = @{
             "--operator-address=127.0.0.1:50057",
             "--threads=1",
             "--nonces=64",
-            "--randomx-mode=light"
+            "--randomx-mode=fast"
         )
     }
     "Post8" = @{									
