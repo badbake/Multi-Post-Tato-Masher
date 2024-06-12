@@ -248,11 +248,11 @@ function Curl-ProvingProgress {
         $response = Invoke-Expression ("curl http://$operatorAddress/status") 2>$null -ErrorAction Inquire
 		Log-Message " $($response) " "DEBUG"
 
-        if ($response -match "Idle") {
-            Log-Message "Proving process returned to Idle state" "INFO"
-            return
-        } elseif ($response -match "DoneProving") {
+        if ($response -match "DoneProving") {
             Log-Message "Proving process completed" "INFO"
+            return
+        } elseif ($response -match "IDLE") {
+            Log-Message "Proving process completed, returned to Idle state" "INFO"
             return
         } elseif ($postStatus -match '^{.*}$') {
             $response | ConvertFrom-Json
@@ -272,7 +272,7 @@ function Curl-ProvingProgress {
 
                 Start-Sleep -Seconds $provingCheckInterval
             } else {
-                Log-Message "Unexpected JSON structure: $($response) $($jsonResponse) " "WARNING"
+                Log-Message "Unexpected JSON structure: Response = $($response) JsonResponse = $($jsonResponse) " "WARNING"
                 return $null
             }
         } catch {
