@@ -7,7 +7,7 @@
     File Name: BadBakes_Multi_Post-tato_Masher__V1.0.8_TESTNET.ps1
     Author: badbake
     Version: 1.1.1
-    Last Updated: 2024-06-10
+    Last Updated: 2024-06-11
 #>
 
 # Set the window title
