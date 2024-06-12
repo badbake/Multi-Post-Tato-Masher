@@ -510,7 +510,8 @@ function Run-AllInstances {
 # Function to calculate the next trigger time based on the user's local time zone
 function Calculate-NextTriggerTime {
     # Define the initial trigger date and time in UTC
-    $initialTriggerDateTimeUtc = [DateTime]::new(2024, 6, 6, 23, 00, 0)
+    $initialTriggerDateTimeUtc = [DateTime]::new(2024, 6, 6, 23, 00, 0) #testnet12
+	#$initialTriggerDateTimeUtc = [DateTime]::new(2024, 5, 12, 20, 00, 0) #mainnet
 
     # Convert the initial trigger time to the local time zone
     $initialTriggerDateTimeLocal = $initialTriggerDateTimeUtc.ToLocalTime()
@@ -522,9 +523,11 @@ function Calculate-NextTriggerTime {
         # Calculate the time difference between the current time and the initial trigger time
         $timeDifference = $currentDateTimeLocal - $initialTriggerDateTimeLocal
         # Calculate the number of full 1-day intervals that have passed
-        $fullIntervals = [Math]::Floor($timeDifference.TotalDays)
+        $fullIntervals = [Math]::Floor($timeDifference.TotalDays) #testnet12
+		#$fullIntervals = [Math]::Floor($timeDifference.TotalDays / 14) #mainnet
         # Calculate the next trigger time by adding the necessary number of 1-day intervals to the initial trigger time
-        $nextTriggerDateTimeLocal = $initialTriggerDateTimeLocal.AddDays($fullIntervals + 1)
+        $nextTriggerDateTimeLocal = $initialTriggerDateTimeLocal.AddDays($fullIntervals + 1) #testnet12
+		#$nextTriggerDateTimeLocal = $initialTriggerDateTimeLocal.AddDays(($fullIntervals + 1) * 14) #mainnet
     } else {
         # If the current time is before the initial trigger time, the next trigger time is the initial trigger time
         $nextTriggerDateTimeLocal = $initialTriggerDateTimeLocal
