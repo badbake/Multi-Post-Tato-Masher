@@ -379,12 +379,11 @@ function Run-Instance {
             Log-Message "Node returning idle for '$instanceName'. Proof is assumed accepted" "INFO"
             Stop-PoST-Service -process $serviceProcess
             return
-        } elseif ($idleFound -and $provingStateReached) {
-            $shutdownInitiated = $true
-            Log-Message "PoST-Service '$instanceName' has completed PROVING. Checking Node..." "INFO"
         } elseif ($provingFound -and $previousState -eq "PROVING") {
             # Call the Curl-ProvingProgress function instead of logging
             Curl-ProvingProgress -operatorAddress $operatorAddress -numUnits $numUnits
+			$shutdownInitiated = $true
+            Log-Message "PoST-Service '$instanceName' has completed PROVING. Checking Node..." "INFO"
         } elseif ($idleFound -and $previousState -ne "IDLE" -and -not $provingStateReached) {
             Log-Message "PoST-Service '$instanceName' is in the IDLE state." "INFO"
             $previousState = "IDLE"
