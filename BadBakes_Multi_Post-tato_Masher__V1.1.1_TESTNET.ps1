@@ -248,10 +248,10 @@ function Curl-ProvingProgress {
         $response = Invoke-Expression ("curl http://$operatorAddress/status") 2>$null -ErrorAction Inquire
 		Log-Message " $($response) " "DEBUG"
 
-        if ($response -eq "Idle") {
+        if ($response -contains "Idle") {
             Log-Message "Proving process returned to Idle state" "INFO"
             return "Idle"
-        } elseif ($response -eq "DoneProving") {
+        } elseif ($response -contains "DoneProving") {
             Log-Message "Proving process completed" "INFO"
             return "DoneProving"
         } elseif ($postStatus -match '^{.*}$') {
