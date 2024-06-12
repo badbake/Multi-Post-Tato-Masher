@@ -260,7 +260,7 @@ function Run-Instance {
         } elseif ($idleFound -and $previousState -eq "IDLE") {
             $idleCounter++
             Log-Message "PoST-Service '$instanceName' continues to be in the IDLE state. Idle count: $idleCounter" "INFO"
-            if ($idleCounter -ge 4) {
+            if ($idleCounter -ge 8) {
                 $shutdownInitiated = $true
                 Log-Message "PoST-Service '$instanceName' idle state detected 4 times. Initiating shutdown." "INFO"
                 Stop-PoST-Service -process $serviceProcess
