@@ -486,7 +486,7 @@ function Update-ConsoleWithRemainingTime {
 
         $formattedRemainingTime = 'Days={0} Hours={1:00} Minutes={2:00} Seconds={3:00}' -f $remainingDays, $remainingHours, $remainingMinutes, $remainingSeconds
 
-        Write-Host -NoNewline "`r                            - Time Remaining: $formattedRemainingTime"
+        Write-Host -NoNewline "`r                               - Time Remaining: $formattedRemainingTime"
         Start-Sleep -Seconds 1
 
         if ($timeDifference.TotalSeconds -le 1) {
