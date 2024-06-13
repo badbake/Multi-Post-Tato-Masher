@@ -249,7 +249,7 @@ function Run-Instance {
             Log-Message "Node returning idle for '$instanceName'. Proof is assumed accepted" "INFO"
             Stop-PoST-Service -process $serviceProcess
 			# Call ReadProvingData at the end of Run-Instance
-			ReadProvingData -ReadlogFilePath $serviceLogFilePath -instanceName $instanceName
+			ReadProvingData -serviceLogFilePath $serviceLogFilePath -instanceName $instanceName
             return
         } elseif ($provingFound -and $previousState -eq "PROVING") {
             Curl-ProvingProgress -operatorAddress $operatorAddress -numUnits $numUnits
@@ -262,9 +262,9 @@ function Run-Instance {
         } elseif ($idleFound -and $previousState -eq "IDLE") {
             $idleCounter++
             Log-Message "PoST-Service '$instanceName' continues to be in the IDLE state. Idle count: $idleCounter" "INFO"
-            if ($idleCounter -ge 8) {
+            if ($idleCounter -ge 2) {
                 $shutdownInitiated = $true
-                Log-Message "PoST-Service '$instanceName' idle state detected 4 times. Initiating shutdown." "INFO"
+                Log-Message "PoST-Service '$instanceName' idle state detected $idleCounter times. Initiating shutdown." "INFO"
                 Stop-PoST-Service -process $serviceProcess
                 return
             }
@@ -276,12 +276,12 @@ function Run-Instance {
 # Function to read proving data from a specific service log file
 function ReadProvingData {
     param (
-        [string]$logFilePath,
+        [string]$serviceLogFilePath,
         [string]$instanceName
     )
 
     try {
-        $logContent = Get-Content -Path $logFilePath
+        $logContent = Get-Content -Path $serviceLogFilePath
         $k2ptime = $logContent | Select-String -Pattern "INFO  post::prove\] finished k2pow in ([0-9]+m [0-9]+s)"
         $postdatareadtime = $logContent | Select-String -Pattern "INFO  post::prove\] finished reading POST data in ([0-9]+m [0-9]+s)"
         $totalprooftime = $logContent | Select-String -Pattern "INFO  post::prove\] found proof .* It took ([0-9]+m [0-9]+s)"
