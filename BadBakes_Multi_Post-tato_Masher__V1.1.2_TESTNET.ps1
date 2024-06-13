@@ -40,7 +40,7 @@ function Log-Message {
     }
 
     if ($logLevelHierarchy[$level] -ge $logLevelHierarchy[$FileLogLevel]) {
-        $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+        $timestamp = Get-Date -Format 'MM-dd-yyyy hh:mm:ss tt'
         $logMessage = "$timestamp - [$level] - $message"
         $logMessage | Out-File -Append -FilePath $logFilePath
     }
@@ -49,6 +49,7 @@ function Log-Message {
         Colorize-Logs -message $message -level $level -timestamp $timestamp
     }
 }
+
 
 # Function to display colorized logs in the console
 function Colorize-Logs {
@@ -87,7 +88,7 @@ function Colorize-Logs {
     }
 
     Write-Host -NoNewline -ForegroundColor $timestampColor $timestamp
-    Write-Host -NoNewline " : "
+    Write-Host -NoNewline -ForegroundColor $timestampColor ": "
     Write-Host -NoNewline -ForegroundColor $levelColor "[$level]"
     Write-Host -NoNewline " - "
     Write-Host -ForegroundColor $messageColor $message
@@ -330,7 +331,7 @@ function Clear-ServiceLogFiles {
         foreach ($logFile in $logFiles) {
             try {
                 Remove-Item -Path $logFile.FullName -Force
-                Log-Message "Cleared log file: $($logFile.FullName)" "INFO"
+                Log-Message "Cleared log file: $($logFile.FullName)" "DEBUG"
             } catch {
                 Log-Message "Failed to delete log file: $($logFile.FullName). Error: $_" "ERROR"
             }
@@ -485,7 +486,7 @@ function Update-ConsoleWithRemainingTime {
 
         $formattedRemainingTime = 'Days={0} Hours={1:00} Minutes={2:00} Seconds={3:00}' -f $remainingDays, $remainingHours, $remainingMinutes, $remainingSeconds
 
-        Write-Host -NoNewline "`r                             - Time Remaining: $formattedRemainingTime"
+        Write-Host -NoNewline "`r                            - Time Remaining: $formattedRemainingTime"
         Start-Sleep -Seconds 1
 
         if ($timeDifference.TotalSeconds -le 1) {
