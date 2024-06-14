@@ -265,16 +265,12 @@ function Curl-ProvingProgress {
                 $start = $jsonResponse.Proving.nonces.start
                 $end = $jsonResponse.Proving.nonces.end
                 $position = $jsonResponse.Proving.position
+				$passNumber = $end / $nonces
 
                 if ($end -eq 0) {
                     Log-Message "Post-Service is starting k2pow" "INFO"
-                } elseif ($end % $nonces -gt 1) {
-                    $passNumber = $end / $nonces
-                    Log-Message "Post-Service has started k2pow pass number: $passNumber" "INFO"
-					$k2powMorePasses = $true
                 } elseif ($k2powMorePasses -eq $true) {
                     $passNumber = $end / $nonces
-					Log-Message "Proving is in Stage 1/Pass $passNumber" "INFO"
                     # Existing logic to handle position-based progress
                     if ($position -eq (($numUnits * 16384) * ($passNumber - 1))) {
                         Log-Message "Proving is in Stage 1. Pass #passNumber" "INFO"
@@ -284,8 +280,10 @@ function Curl-ProvingProgress {
                         Log-Message "Math Result: ( $($position) / $($numUnits) ) x 100 = $($progressPercentage) /Pass $passNumber" "DEBUG"
                         Log-Message "Proving Post_Data Read: Progress $($progressPercentage)% /Pass $passNumber" "INFO"
 					}
-                } elseif ($k2powStarted -eq $true and $k2powMorePasses -eq $false) {
-                    Log-Message "Proving is in Stage 1" "INFO"
+                } elseif ($passNumber -gt 1) {
+                    Log-Message "Post-Service has started k2pow pass number: $passNumber" "INFO"
+					$k2powMorePasses = $true
+                } elseif ($k2powStarted -eq $true -and $k2powMorePasses -eq $false) {
                     # Existing logic to handle position-based progress
                     if ($position -eq 0) {
                         Log-Message "Proving is in Stage 1." "INFO"
@@ -295,6 +293,9 @@ function Curl-ProvingProgress {
                         Log-Message "Math Result: ( $($position) / $($numUnits) ) x 100 = $($progressPercentage)" "DEBUG"
                         Log-Message "Proving Post_Data Read: Progress $($progressPercentage)%" "INFO"
 					}
+                } elseif ($passNumber -gt 1) {
+                    Log-Message "Post-Service has started k2pow pass number: $passNumber" "INFO"
+					$k2powMorePasses = $true
                 } elseif ($end -eq $nonces) {
                     Log-Message "Post-Service has started k2pow" "INFO"
 					$k2powStarted = $true
