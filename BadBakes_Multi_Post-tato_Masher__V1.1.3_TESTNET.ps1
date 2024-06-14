@@ -245,6 +245,7 @@ function Curl-ProvingProgress {
 	
 	$k2powStarted = $false
 	$k2powMorePasses = $false
+	$passcountTicker = 0
 
     while ($true) {
         # Send request to operator address
@@ -269,6 +270,14 @@ function Curl-ProvingProgress {
 
                 if ($end -eq 0) {
                     Log-Message "Post-Service is starting k2pow" "INFO"
+                } elseif ($end -eq $nonces -and $k2powStarted -eq $false) {
+                    Log-Message "Post-Service has started k2pow" "INFO"
+					$k2powStarted = $true
+					$passcountTicker++
+                } elseif ($passNumber -gt $passcountTicker -and $k2powStarted -eq $true) {
+                    Log-Message "Post-Service has started k2pow pass number: $passNumber" "INFO"
+					$passcountTicker++
+					$k2powMorePasses = $true
                 } elseif ($k2powMorePasses -eq $true) {
                     # Existing logic to handle position-based progress
                     if ($position -eq 0) {							##Setting to 0 for testnet but use math for mainnet (($numUnits * 68719476736) * ($passNumber - 1))
@@ -279,9 +288,6 @@ function Curl-ProvingProgress {
                         Log-Message "Math Result: ( $($position) / $($numUnits) ) x 100 = $($progressPercentage) /Pass $passNumber" "DEBUG"
                         Log-Message "Proving Post_Data Read: Progress $($progressPercentage)% /Pass $passNumber" "INFO"
 					}
-                } elseif ($passNumber -gt 1) {
-                    Log-Message "Post-Service has started k2pow pass number: $passNumber" "INFO"
-					$k2powMorePasses = $true
                 } elseif ($k2powStarted -eq $true -and $k2powMorePasses -eq $false) {
                     # Existing logic to handle position-based progress
                     if ($position -eq 0) {
@@ -292,13 +298,6 @@ function Curl-ProvingProgress {
                         Log-Message "Math Result: ( $($position) / $($numUnits) ) x 100 = $($progressPercentage)" "DEBUG"
                         Log-Message "Proving Post_Data Read: Progress $($progressPercentage)%" "INFO"
 					}
-                } elseif ($passNumber -gt 1) {
-                    Log-Message "Post-Service has started k2pow pass number: $passNumber" "INFO"
-					$k2powMorePasses = $true
-                } elseif ($end -eq $nonces) {
-                    Log-Message "Post-Service has started k2pow" "INFO"
-					$k2powStarted = $true
-
                 } else {
                     Log-Message "Unexpected JSON structure: Response = $($response) JsonResponse = $($jsonResponse) " "WARN"
                 }
@@ -354,9 +353,10 @@ function ReadProvingData {
             Log-Message "Proof verification took ${verifytimeValue} for ${instanceName}" "INFO"
         }
     } catch {
-        Log-Message "Failed to read or parse log file: $($logFilePath) for ${instanceName}. Error: $_" "ERROR"
+        Log-Message "Failed to read or parse log file: $($serviceLogFilePath) for ${instanceName}. Error: $_" "ERROR"
     }
 }
+
 
 
 # Function to clear service log files
@@ -571,6 +571,10 @@ function Check-And-Run-ProvingInstances {
     # If no instances requiring proof were found, log a message before proceeding with the timer
     if (-not $provingInstancesFound) {
         Log-Message "No PoST Services found requiring proof, proceeding with timer..." "INFO"
+    }
+	
+    if ($clearServiceLogFiles) {
+        Clear-ServiceLogFiles -logDirectory $logDirectory -instances $instances.Keys
     }
 }
 
