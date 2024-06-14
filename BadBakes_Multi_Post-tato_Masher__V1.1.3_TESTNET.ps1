@@ -160,11 +160,12 @@ function Curl-ProvingProgress {
                     if ($position -eq 0) {
                         Log-Message "Proving is in Stage 1." "INFO"
                     } elseif ($position -gt 0) {
-                        $progressPercentage = [math]::Round(($position / ($numUnits * 16384)) * 100, 0) # testNet
+                        #$progressPercentage = [math]::Round(($position / ($numUnits * 68719476736)) * 100, 0) #mainNet 
+                        $progressPercentage = [math]::Round(($position / ($numUnits * 16384)) * 100, 0) #testNet
                         Log-Message "Math Result: ( $($position) / $($numUnits) ) x 100 = $($progressPercentage)" "DEBUG"
                         Log-Message "Proving Post_Data Read: Progress $($progressPercentage)%" "INFO"
                     }
-                } elseif ($start -eq $nonces -and $end -eq ($nonces * 2) -and $position -eq 0) {
+                } elseif ($end % $nonces -eq 0) {
                     $passNumber = $end / $nonces
                     Log-Message "Post-Service has started k2pow pass number: $passNumber" "INFO"
                 } else {
@@ -182,6 +183,7 @@ function Curl-ProvingProgress {
         }
     }
 }
+
 
 
 # Function to run a PoST service instance with the specified arguments
