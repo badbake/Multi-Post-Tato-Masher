@@ -118,74 +118,6 @@ function GetNumUnitsForInstance {
     }
 }
 
-# Function to calculate Proving progress
-function Curl-ProvingProgress {
-    param (
-        [string]$operatorAddress,
-        [int]$numUnits,
-        [string[]]$arguments
-    )
-
-    # Extract the --nonces value from the arguments
-    $noncesArgument = ($arguments -like "--nonces=*")[0]
-    $nonces = [int]($noncesArgument.Split("=")[1])
-
-    while ($true) {
-        # Send request to operator address
-        $response = Invoke-Expression ("curl http://$operatorAddress/status") 2>$null -ErrorAction Inquire
-        Log-Message "Response: $($response)" "DEBUG"
-
-        if ($response -match "DoneProving") {
-            Log-Message "Proving process completed" "INFO"
-            return
-        } elseif ($response -match "IDLE") {
-            Log-Message "Proving process completed, returned to Idle state" "INFO"
-            return
-        }
-
-        try {
-            $jsonResponse = $response | ConvertFrom-Json
-            if ($jsonResponse.Proving) {
-                $start = $jsonResponse.Proving.nonces.start
-                $end = $jsonResponse.Proving.nonces.end
-                $position = $jsonResponse.Proving.position
-
-                if ($start -eq 0 -and $end -eq 0 -and $position -eq 0) {
-                    Log-Message "Post-Service is starting k2pow" "INFO"
-                } elseif ($start -eq 0 -and $end -eq $nonces -and $position -eq 0) {
-                    Log-Message "Post-Service has started k2pow" "INFO"
-                } elseif ($start -eq 0 -and $end -eq $nonces -and $position -gt 0) {
-                    Log-Message "Proving is in Stage 1" "INFO"
-                    # Existing logic to handle position-based progress
-                    if ($position -eq 0) {
-                        Log-Message "Proving is in Stage 1." "INFO"
-                    } elseif ($position -gt 0) {
-                        #$progressPercentage = [math]::Round(($position / ($numUnits * 68719476736)) * 100, 0) #mainNet 
-                        $progressPercentage = [math]::Round(($position / ($numUnits * 16384)) * 100, 0) #testNet
-                        Log-Message "Math Result: ( $($position) / $($numUnits) ) x 100 = $($progressPercentage)" "DEBUG"
-                        Log-Message "Proving Post_Data Read: Progress $($progressPercentage)%" "INFO"
-                    }
-                } elseif ($end % $nonces -eq 0) {
-                    $passNumber = $end / $nonces
-                    Log-Message "Post-Service has started k2pow pass number: $passNumber" "INFO"
-                } else {
-                    Log-Message "Unexpected JSON structure: Response = $($response) JsonResponse = $($jsonResponse) " "WARN"
-                }
-
-                Start-Sleep -Seconds $provingCheckInterval
-            } else {
-                Log-Message "Unexpected JSON structure: Response = $($response) JsonResponse = $($jsonResponse) " "WARN"
-                return $null
-            }
-        } catch {
-            Log-Message "Failed to parse JSON response: $_" "ERROR"
-            return $null
-        }
-    }
-}
-
-
-
 # Function to run a PoST service instance with the specified arguments
 function Run-Instance {
     param (
@@ -195,6 +127,10 @@ function Run-Instance {
 
     $dirArgument = ($arguments -like "--dir=*")[0]
     $instanceDir = $dirArgument.Split("=")[1]
+	
+	#Log Message to display which 'Post' Instance is starting.
+	Log-Message "Starting Instance for $instanceName" "INFO"
+	
     $numUnits = GetNumUnitsForInstance -instanceDir $instanceDir
 
     $operatorAddressArgument = ($arguments -like "--operator-address=*")[0]
@@ -274,7 +210,7 @@ function Run-Instance {
 			ReadProvingData -serviceLogFilePath $serviceLogFilePath -instanceName $instanceName
             return
         } elseif ($provingFound -and $previousState -eq "PROVING") {
-            Curl-ProvingProgress -operatorAddress $operatorAddress -numUnits $numUnits
+            Curl-ProvingProgress -operatorAddress $operatorAddress -numUnits $numUnits -arguments $arguments
             $shutdownInitiated = $true
             Log-Message "PoST-Service '$instanceName' has completed PROVING. Checking Node..." "INFO"
         } elseif ($idleFound -and $previousState -ne "IDLE" -and -not $provingStateReached) {
@@ -294,6 +230,91 @@ function Run-Instance {
     } while ($true)
 	
 }
+
+# Function to calculate Proving progress
+function Curl-ProvingProgress {
+    param (
+        [string]$operatorAddress,
+        [int]$numUnits,
+        [string[]]$arguments
+    )
+
+    # Extract the --nonces value from the arguments
+    $noncesArgument = ($arguments -like "--nonces=*")[0]
+    $nonces = [int]($noncesArgument.Split("=")[1])
+	
+	$k2powStarted = $false
+	$k2powMorePasses = $false
+
+    while ($true) {
+        # Send request to operator address
+        $response = Invoke-Expression ("curl http://$operatorAddress/status") 2>$null -ErrorAction Inquire
+        Log-Message "Response: $($response)" "DEBUG"
+
+        if ($response -match "DoneProving") {
+            Log-Message "Proving process completed" "INFO"
+            return
+        } elseif ($response -match "IDLE") {
+            Log-Message "Proving process completed, returned to Idle state" "INFO"
+            return
+        }
+
+        try {
+            $jsonResponse = $response | ConvertFrom-Json
+            if ($jsonResponse.Proving) {
+                $start = $jsonResponse.Proving.nonces.start
+                $end = $jsonResponse.Proving.nonces.end
+                $position = $jsonResponse.Proving.position
+
+                if ($end -eq 0) {
+                    Log-Message "Post-Service is starting k2pow" "INFO"
+                } elseif ($end % $nonces -gt 1) {
+                    $passNumber = $end / $nonces
+                    Log-Message "Post-Service has started k2pow pass number: $passNumber" "INFO"
+					$k2powMorePasses = $true
+                } elseif ($k2powMorePasses -eq $true) {
+                    $passNumber = $end / $nonces
+					Log-Message "Proving is in Stage 1/Pass $passNumber" "INFO"
+                    # Existing logic to handle position-based progress
+                    if ($position -eq (($numUnits * 16384) * ($passNumber - 1))) {
+                        Log-Message "Proving is in Stage 1. Pass #passNumber" "INFO"
+                    } elseif ($position -gt (($numUnits * 16384) * ($passNumber - 1))) {
+                        #$progressPercentage = [math]::Round(($position / (($numUnits * 68719476736) * ($passNumber - 1))) * 100, 0) #mainNet 
+                        $progressPercentage = [math]::Round(($position / (($numUnits * 16384) * ($passNumber - 1))) * 100, 0) #testNet
+                        Log-Message "Math Result: ( $($position) / $($numUnits) ) x 100 = $($progressPercentage) /Pass $passNumber" "DEBUG"
+                        Log-Message "Proving Post_Data Read: Progress $($progressPercentage)% /Pass $passNumber" "INFO"
+					}
+                } elseif ($k2powStarted -eq $true and $k2powMorePasses -eq $false) {
+                    Log-Message "Proving is in Stage 1" "INFO"
+                    # Existing logic to handle position-based progress
+                    if ($position -eq 0) {
+                        Log-Message "Proving is in Stage 1." "INFO"
+                    } elseif ($position -gt 0) {
+                        #$progressPercentage = [math]::Round(($position / ($numUnits * 68719476736)) * 100, 0) #mainNet 
+                        $progressPercentage = [math]::Round(($position / ($numUnits * 16384)) * 100, 0) #testNet
+                        Log-Message "Math Result: ( $($position) / $($numUnits) ) x 100 = $($progressPercentage)" "DEBUG"
+                        Log-Message "Proving Post_Data Read: Progress $($progressPercentage)%" "INFO"
+					}
+                } elseif ($end -eq $nonces) {
+                    Log-Message "Post-Service has started k2pow" "INFO"
+					$k2powStarted = $true
+
+                } else {
+                    Log-Message "Unexpected JSON structure: Response = $($response) JsonResponse = $($jsonResponse) " "WARN"
+                }
+
+                Start-Sleep -Seconds $provingCheckInterval
+            } else {
+                Log-Message "Unexpected JSON structure: Response = $($response) JsonResponse = $($jsonResponse) " "WARN"
+                return $null
+            }
+        } catch {
+            Log-Message "Failed to parse JSON response: $_" "ERROR"
+            return $null
+        }
+    }
+}
+
 
 # Function to read proving data from a specific service log file
 function ReadProvingData {
