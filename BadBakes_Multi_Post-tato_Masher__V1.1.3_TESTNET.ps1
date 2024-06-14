@@ -270,11 +270,10 @@ function Curl-ProvingProgress {
                 if ($end -eq 0) {
                     Log-Message "Post-Service is starting k2pow" "INFO"
                 } elseif ($k2powMorePasses -eq $true) {
-                    $passNumber = $end / $nonces
                     # Existing logic to handle position-based progress
-                    if ($position -eq (($numUnits * 16384) * ($passNumber - 1))) {
-                        Log-Message "Proving is in Stage 1. Pass #passNumber" "INFO"
-                    } elseif ($position -gt (($numUnits * 16384) * ($passNumber - 1))) {
+                    if ($position -eq 0) {							#Setting to 0 for testnet but use math for mainnet (($numUnits * 68719476736) * ($passNumber - 1))
+                        Log-Message "Proving is in Stage 1. Pass $passNumber" "INFO"
+                    } elseif ($position -gt 0) {					#Setting to 0 for testnet but use math for mainnet (($numUnits * 68719476736) * ($passNumber - 1))
                         #$progressPercentage = [math]::Round(($position / (($numUnits * 68719476736) * ($passNumber - 1))) * 100, 0) #mainNet 
                         $progressPercentage = [math]::Round(($position / (($numUnits * 16384) * ($passNumber - 1))) * 100, 0) #testNet
                         Log-Message "Math Result: ( $($position) / $($numUnits) ) x 100 = $($progressPercentage) /Pass $passNumber" "DEBUG"
