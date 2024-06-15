@@ -207,7 +207,7 @@ function Run-Instance {
             Log-Message "Node returning idle for '$instanceName'. Proof is assumed accepted" "INFO"
             Stop-PoST-Service -process $serviceProcess
 			# Call ReadProvingData at the end of Run-Instance
-			ReadProvingData -serviceLogFilePath $serviceLogFilePath -instanceName $instanceName
+			#ReadProvingData -serviceLogFilePath $serviceLogFilePath -instanceName $instanceName				##FOR LATER IMPLEMENTATION##
             return
         } elseif ($provingFound -and $previousState -eq "PROVING") {
             Curl-ProvingProgress -operatorAddress $operatorAddress -numUnits $numUnits -arguments $arguments
