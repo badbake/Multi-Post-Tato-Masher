@@ -19,10 +19,10 @@ $logFilePath = Join-Path -Path $logDirectory -ChildPath $logFileName
 .DESCRIPTION
     This script runs different instances of the PoST Proving "service.exe" sequentially, waits for each to complete before starting the next, and handles Cycle Gap timing.
 .NOTES
-    File Name: BadBakes_Multi_Post-tato_Masher__V1.0.8_TESTNET.ps1
+    File Name: BadBakes_Multi_Post-tato_Masher__V1.2_TESTNET.ps1
     Author: badbake
-    Version: 1.1.1
-    Last Updated: 2024-06-11
+    Version: 1.2
+    Last Updated: 2024-06-13
 #>
 
 # Function to log messages with timestamp and log level
