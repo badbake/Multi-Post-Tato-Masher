@@ -201,13 +201,14 @@ function Run-Instance {
         if ($provingFound -and $previousState -ne "PROVING") {
             Log-Message "PoST-Service '$instanceName' is PROVING." "INFO"
             $provingStateReached = $true
+			$ProofStartTime = Get-Date
             $previousState = "PROVING"
             $idleCounter = 0
         } elseif ($shutdownInitiated -eq $true) {
             Log-Message "Node returning idle for '$instanceName'. Proof is assumed accepted" "INFO"
             Stop-PoST-Service -process $serviceProcess
-			# Call ReadProvingData at the end of Run-Instance
-			#ReadProvingData -serviceLogFilePath $serviceLogFilePath -instanceName $instanceName				##FOR LATER IMPLEMENTATION##
+			# Call CalculateProvingTime at the end of Run-Instance
+			CalculateProvingTime -ProofStartTime $ProofStartTime -ProofEndTime $ProofEndTime -instanceName $instanceName				##FOR LATER IMPLEMENTATION##  ##started on 6-16##
             return
         } elseif ($provingFound -and $previousState -eq "PROVING") {
             Curl-ProvingProgress -operatorAddress $operatorAddress -numUnits $numUnits -arguments $arguments
@@ -253,9 +254,11 @@ function Curl-ProvingProgress {
         Log-Message "Response: $($response)" "DEBUG"
 
         if ($response -match "DoneProving") {
-            Log-Message "Proving process completed" "INFO"
+            $ProofEndTime = Get-Date
+			Log-Message "Proving process completed" "INFO"
             return
         } elseif ($response -match "IDLE") {
+			$ProofEndTime = Get-Date
             Log-Message "Proving process completed, returned to Idle state" "INFO"
             return
         }
@@ -316,44 +319,35 @@ function Curl-ProvingProgress {
 
 
 # Function to read proving data from a specific service log file
-function ReadProvingData {
+function CalculateProvingTime {
     param (
-        [string]$serviceLogFilePath,
+        [string]$ProofStartTime,
+		[string]$ProofEndTime,
         [string]$instanceName
     )
 
     try {
-        $logContent = Get-Content -Path $serviceLogFilePath
-        $k2ptime = $logContent | Select-String -Pattern "INFO  post::prove\] finished k2pow in ([0-9]+m [0-9]+s)"
-        $postdatareadtime = $logContent | Select-String -Pattern "INFO  post::prove\] finished reading POST data in ([0-9]+m [0-9]+s)"
-        $totalprooftime = $logContent | Select-String -Pattern "INFO  post::prove\] found proof .* It took ([0-9]+m [0-9]+s)"
-        $verifytime = $logContent | Select-String -Pattern "INFO  post_service::client\] proof is valid \(verification took: ([0-9]+\.[0-9]+s)\)"
+        $ProofTotalTime = $ProofEndTime - $ProofStartTime
+		
+        $ProofHours = $ProofTotalTime.Hours
+        $ProofMinutes = $ProofTotalTime.Minutes
+        $ProofSeconds = $ProofTotalTime.Seconds
+
+        $formattedProofTime = 'Hours={1:00} Minutes={2:00} Seconds={3:00}' -f $ProofHours, $ProofMinutes, $ProofSeconds
         
-        if ($k2ptime) {
-            $k2ptimeValue = $k2ptime.Matches[0].Groups[1].Value
-            Log-Message "k2ptime for ${instanceName}: ${k2ptimeValue}" "DEBUG"
-            Log-Message "finished k2pow in ${k2ptimeValue} for ${instanceName}" "INFO"
+        if ($ProofTotalTime -gt 0) {
+            Log-Message "CalculateProvingTime for ${instanceName}: Start time= ${ProofStartTime} End Time= ${ProofEndTime} Total Time = ${ProofTotalTime} Formatted Time= ${formattedProofTime}" "DEBUG"
+            Log-Message "Approximate Proving Time for ${instanceName}: ${formattedProofTime}" "INFO"
+			break
         }
-
-        if ($postdatareadtime) {
-            $postdatareadtimeValue = $postdatareadtime.Matches[0].Groups[1].Value
-            Log-Message "postdatareadtime for ${instanceName}: ${postdatareadtimeValue}" "DEBUG"
-            Log-Message "finished reading POST data in ${postdatareadtimeValue} for ${instanceName}" "INFO"
-        }
-
-        if ($totalprooftime) {
-            $totalprooftimeValue = $totalprooftime.Matches[0].Groups[1].Value
-            Log-Message "totalprooftime for ${instanceName}: ${totalprooftimeValue}" "DEBUG"
-            Log-Message "Proof created for ${instanceName}, it took ${totalprooftimeValue}" "INFO"
-        }
-
-        if ($verifytime) {
-            $verifytimeValue = $verifytime.Matches[0].Groups[1].Value
-            Log-Message "verifytime for ${instanceName}: ${verifytimeValue}" "DEBUG"
-            Log-Message "Proof verification took ${verifytimeValue} for ${instanceName}" "INFO"
-        }
+		elseif {
+			Log-Message "CalculateProvingTime for ${instanceName}: Start time= ${ProofStartTime} End Time= ${ProofEndTime} Total Time = ${ProofTotalTime} Formatted Time= ${formattedProofTime}" "DEBUG"
+            Log-Message "Approximate Proving Time Failed for ${instanceName}" "WARN"
+			break
+		}
+		
     } catch {
-        Log-Message "Failed to read or parse log file: $($serviceLogFilePath) for ${instanceName}. Error: $_" "ERROR"
+        Log-Message "Failed to determine approximate proving time." "ERROR"
     }
 }
 
