@@ -213,6 +213,7 @@ function Run-Instance {
         } elseif ($provingFound -and $previousState -eq "PROVING") {
             Curl-ProvingProgress -operatorAddress $operatorAddress -numUnits $numUnits -arguments $arguments
             $shutdownInitiated = $true
+			$ProofEndTime = Get-Date
             Log-Message "PoST-Service '$instanceName' has completed PROVING. Checking Node..." "INFO"
         } elseif ($idleFound -and $previousState -ne "IDLE" -and -not $provingStateReached) {
             Log-Message "PoST-Service '$instanceName' is in the IDLE state." "INFO"
@@ -254,11 +255,9 @@ function Curl-ProvingProgress {
         Log-Message "Response: $($response)" "DEBUG"
 
         if ($response -match "DoneProving") {
-            $ProofEndTime = Get-Date
 			Log-Message "Proving process completed" "INFO"
             return
         } elseif ($response -match "IDLE") {
-			$ProofEndTime = Get-Date
             Log-Message "Proving process completed, returned to Idle state" "INFO"
             return
         }
@@ -333,20 +332,21 @@ function CalculateProvingTime {
         $ProofMinutes = $ProofTotalTime.Minutes
         $ProofSeconds = $ProofTotalTime.Seconds
 
-        $formattedProofTime = 'Hours={1:00} Minutes={2:00} Seconds={3:00}' -f $ProofHours, $ProofMinutes, $ProofSeconds
+        $formattedProofTime = 'Hours={0:00} Minutes={1:00} Seconds={2:00}' -f $ProofHours, $ProofMinutes, $ProofSeconds
         
         if ($ProofTotalTime -gt 0) {
-            Log-Message "CalculateProvingTime for ${instanceName}: Start time= ${ProofStartTime} End Time= ${ProofEndTime} Total Time = ${ProofTotalTime} Formatted Time= ${formattedProofTime}" "DEBUG"
+            Log-Message "CalculateProvingTime for ${instanceName}: Start time= ${ProofStartTime} End Time= ${ProofEndTime} Total Time = ${ProofTotalTime} ProofHours = ${ProofHours} ProofMinutes = ${ProofMinutes} ProofSeconds = ${ProofSeconds} Formatted Time= ${formattedProofTime}" "DEBUG"
             Log-Message "Approximate Proving Time for ${instanceName}: ${formattedProofTime}" "INFO"
 			break
         }
 		else {
-			Log-Message "CalculateProvingTime for ${instanceName}: Start time= ${ProofStartTime} End Time= ${ProofEndTime} Total Time = ${ProofTotalTime} Formatted Time= ${formattedProofTime}" "DEBUG"
+            Log-Message "CalculateProvingTime for ${instanceName}: Start time= ${ProofStartTime} End Time= ${ProofEndTime} Total Time = ${ProofTotalTime} ProofHours = ${ProofHours} ProofMinutes = ${ProofMinutes} ProofSeconds = ${ProofSeconds} Formatted Time= ${formattedProofTime}" "DEBUG"
             Log-Message "Approximate Proving Time Failed for ${instanceName}" "WARN"
 			break
 		}
 		
     } catch {
+        Log-Message "CalculateProvingTime for ${instanceName}: Start time= ${ProofStartTime} End Time= ${ProofEndTime} Total Time = ${ProofTotalTime} ProofHours = ${ProofHours} ProofMinutes = ${ProofMinutes} ProofSeconds = ${ProofSeconds} Formatted Time= ${formattedProofTime}" "DEBUG"
         Log-Message "Failed to determine approximate proving time." "ERROR"
     }
 }
