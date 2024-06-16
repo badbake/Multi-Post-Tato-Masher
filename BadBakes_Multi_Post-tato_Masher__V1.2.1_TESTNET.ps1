@@ -335,12 +335,12 @@ function CalculateProvingTime {
         $formattedProofTime = 'Hours={0:00} Minutes={1:00} Seconds={2:00}' -f $ProofHours, $ProofMinutes, $ProofSeconds
         
         if ($ProofTotalTime -gt 0) {
-            Log-Message "CalculateProvingTime for ${instanceName}: Start time= ${ProofStartTime} End Time= ${ProofEndTime} Total Time = ${ProofTotalTime} ProofHours = ${ProofHours} ProofMinutes = ${ProofMinutes} ProofSeconds = ${ProofSeconds} Formatted Time= ${formattedProofTime}" "DEBUG"
+            Log-Message "CalculateProvingTime for ${instanceName}: Start time= ${ProofStartTime} End Time= ${ProofEndTime} Total Time = ${ProofTotalTime} Formatted Time= ${formattedProofTime}" "DEBUG"
             Log-Message "Approximate Proving Time for ${instanceName}: ${formattedProofTime}" "INFO"
 			break
         }
 		else {
-            Log-Message "CalculateProvingTime for ${instanceName}: Start time= ${ProofStartTime} End Time= ${ProofEndTime} Total Time = ${ProofTotalTime} ProofHours = ${ProofHours} ProofMinutes = ${ProofMinutes} ProofSeconds = ${ProofSeconds} Formatted Time= ${formattedProofTime}" "DEBUG"
+            Log-Message "CalculateProvingTime for ${instanceName}: Start time= ${ProofStartTime} End Time= ${ProofEndTime} Total Time = ${ProofTotalTime} Formatted Time= ${formattedProofTime}" "DEBUG"
             Log-Message "Approximate Proving Time Failed for ${instanceName}" "WARN"
 			break
 		}
