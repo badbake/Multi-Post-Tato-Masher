@@ -318,11 +318,11 @@ function Curl-ProvingProgress {
 }
 
 
-# Function to read proving data from a specific service log file
+# Function to Calculate Approximate Proving Time
 function CalculateProvingTime {
     param (
-        [string]$ProofStartTime,
-		[string]$ProofEndTime,
+        [datetime]$ProofStartTime,
+		[datetime]$ProofEndTime,
         [string]$instanceName
     )
 
@@ -340,7 +340,7 @@ function CalculateProvingTime {
             Log-Message "Approximate Proving Time for ${instanceName}: ${formattedProofTime}" "INFO"
 			break
         }
-		elseif {
+		else {
 			Log-Message "CalculateProvingTime for ${instanceName}: Start time= ${ProofStartTime} End Time= ${ProofEndTime} Total Time = ${ProofTotalTime} Formatted Time= ${formattedProofTime}" "DEBUG"
             Log-Message "Approximate Proving Time Failed for ${instanceName}" "WARN"
 			break
