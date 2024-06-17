@@ -383,7 +383,7 @@ function Stop-PoST-Service {
 
     try {
         $retryCount = 3
-        $retryInterval = 5000
+        $retryInterval = 2500
 
         for ($i = 0; $i -lt $retryCount; $i++) {
             if ($process.HasExited) {
