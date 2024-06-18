@@ -462,27 +462,47 @@ function Run-AllInstances {
     $instancesInProvingState = $false
     Log-Message "All Instances Ran. Re-Checking all Instances for PROVING state." "INFO"
     
-    foreach ($instanceName in $instances.Keys) {
-        $instance = $instances[$instanceName]
-        Log-Message "Checking State of '$instanceName'." "DEBUG"
+    try {
+        foreach ($instanceName in $instances.Keys) {
+            $instance = $instances[$instanceName]
+            Log-Message "Checking State of '$instanceName'." "DEBUG"
 
-        if (Check-InstanceState -instance $instance -instanceName $instanceName) {
-            $instancesInProvingState = $true
-            Log-Message "PROVING state found. Running PoST-Service for '$instanceName'." "INFO"
-            Run-Instance -instanceName $instanceName -arguments $instance.Arguments
+            if (Check-InstanceState -instance $instance -instanceName $instanceName) {
+                $instancesInProvingState = $true
+                Log-Message "PROVING state found. Running PoST-Service for '$instanceName'." "INFO"
+                Run-Instance -instanceName $instanceName -arguments $instance.Arguments
+            }
         }
-    }
 
-    if (-not $instancesInProvingState) {
-        Log-Message "All PoST-Service's showing IDLE." "INFO"
-        Log-Message "All PoST-Service's have completed proving." "INFO"
-    }
+        if ($instancesInProvingState) {
+            $instancesInProvingState = $false
+            Log-Message "Re-checking instances after running PoST-Service." "INFO"
 
+            foreach ($instanceName in $instances.Keys) {
+                $instance = $instances[$instanceName]
+                Log-Message "Checking State of '$instanceName'." "DEBUG"
+
+                if (Check-InstanceState -instance $instance -instanceName $instanceName) {
+                    $instancesInProvingState = $true
+                    Log-Message "PROVING state still found for '$instanceName'. Exiting the loop." "INFO"
+                    break
+                }
+            }
+        }
+
+        if (-not $instancesInProvingState) {
+            Log-Message "All PoST-Service's showing IDLE." "INFO"
+            Log-Message "All PoST-Service's have completed proving." "INFO"
+        }
+    } catch {
+        Log-Message "An error occurred: $_" "ERROR"
+    }
 
     if ($clearServiceLogFiles) {
         Clear-ServiceLogFiles -logDirectory $logDirectory -instances $instances.Keys
     }
 }
+
 
 
 
