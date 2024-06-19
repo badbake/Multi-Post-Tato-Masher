@@ -190,9 +190,11 @@ function Run-Instance {
                 Log-Message "'$instanceName' matched in the response." "DEBUG"
                 if ($state.state -eq "PROVING") {
                     $provingFound = $true
+					$idleFound = $false
                     Log-Message "Proving found for '$instanceName'." "DEBUG"
                 } elseif ($state.state -eq "IDLE") {
                     $idleFound = $true
+					$provingFound = $false
                     Log-Message "Idle found for '$instanceName'." "DEBUG"
                 }
             }
@@ -205,8 +207,8 @@ function Run-Instance {
             $previousState = "PROVING"
             $idleCounter = 0
 		} elseif ($provingFound -and $previousState -eq "PROVING" -and $shutdownInitiated -eq $true) {
-			Stop-PoST-Service -process $serviceProcess
 			Log-Message "Node still returning PROVING for '$instanceName'. Error has occurred" "WARN"
+			Stop-PoST-Service -process $serviceProcess
 			return
         } elseif ($idleFound -and $previousState -eq "PROVING" -and $shutdownInitiated -eq $true) {
             Log-Message "Node returning idle for '$instanceName'. Proof is assumed accepted" "INFO"
