@@ -156,9 +156,9 @@ function Run-Instance {
     $serviceProcess = Start-Process -FilePath ".\service.exe" -ArgumentList $arguments -NoNewWindow -PassThru -RedirectStandardError $serviceLogFilePath
 
     if ($serviceProcess -ne $null -and (Get-Process -Id $serviceProcess.Id -ErrorAction Inquire)) {
-        Log-Message "$instanceName has successfully started PoST-Service." "INFO"
+        Log-Message "$instanceName has successfully started PoST-Service.exe" "INFO"
     } else {
-        Log-Message "$instanceName failed to start PoST-Service." "ERROR"
+        Log-Message "$instanceName failed to start PoST-Service.exe" "ERROR"
         return $null
     }
 
@@ -201,20 +201,19 @@ function Run-Instance {
         }
 
         if ($provingFound -and $previousState -ne "PROVING") {
-            Log-Message "PoST-Service '$instanceName' is PROVING." "INFO"
+            Log-Message "PoST-Service '$instanceName' is beginning proof." "INFO"
             $provingStateReached = $true
 			$ProofStartTime = Get-Date
             $previousState = "PROVING"
             $idleCounter = 0
 		} elseif ($provingFound -and $previousState -eq "PROVING" -and $shutdownInitiated -eq $true) {
-			Log-Message "Node still returning PROVING for '$instanceName'. Error has occurred" "WARN"
+			Log-Message "Node still returning PROVING for '$instanceName'. An Error has occurred. Check Masher_Config for ${instanceName}." "WARN"
 			Stop-PoST-Service -process $serviceProcess
 			return
         } elseif ($idleFound -and $previousState -eq "PROVING" -and $shutdownInitiated -eq $true) {
-            Log-Message "Node returning idle for '$instanceName'. Proof is assumed accepted" "INFO"
+            Log-Message "Node returning idle for '$instanceName'. Proof is assumed accepted by Node." "INFO"
             Stop-PoST-Service -process $serviceProcess
-			# Call CalculateProvingTime at the end of Run-Instance
-			CalculateProvingTime -ProofStartTime $ProofStartTime -ProofEndTime $ProofEndTime -instanceName $instanceName				##FOR LATER IMPLEMENTATION##  ##started on 6-16##
+			CalculateProvingTime -ProofStartTime $ProofStartTime -ProofEndTime $ProofEndTime -instanceName $instanceName
             return
         } elseif ($provingFound -and $previousState -eq "PROVING") {
             Curl-ProvingProgress -operatorAddress $operatorAddress -numUnits $numUnits -arguments $arguments
@@ -277,9 +276,9 @@ function Curl-ProvingProgress {
 				$passNumber = $end / $nonces
 
                 if ($end -eq 0) {
-                    Log-Message "Post-Service is starting k2pow" "INFO"
+                    Log-Message "Post-Service is warming up..." "INFO"
                 } elseif ($end -eq $nonces -and $k2powStarted -eq $false) {
-                    Log-Message "Post-Service has started k2pow" "INFO"
+                    Log-Message "Post-Service has started k2pow." "INFO"
 					$k2powStarted = $true
 					$passcountTicker++
                 } elseif ($passNumber -gt $passcountTicker -and $k2powStarted -eq $true) {
@@ -289,7 +288,7 @@ function Curl-ProvingProgress {
                 } elseif ($k2powMorePasses -eq $true) {
                     # Existing logic to handle position-based progress
                     if ($position -eq 0) {							##Setting to 0 for testnet but use math for mainnet (($numUnits * 68719476736) * ($passNumber - 1))
-                        Log-Message "Proving is in Stage 1. Pass $passNumber" "INFO"
+                        Log-Message "Proving is in Pass ${passNumber}, Stage 1." "INFO"
                     } elseif ($position -gt 0) {					##Setting to 0 for testnet but use math for mainnet (($numUnits * 68719476736) * ($passNumber - 1))
                         ##$progressPercentage = [math]::Round(($position / (($numUnits * 68719476736) * ($passNumber - 1))) * 100, 0) #mainNet 
                         $progressPercentage = [math]::Round(($position / (($numUnits * 16384) * ($passNumber - 1))) * 100, 0) #testNet
@@ -389,7 +388,7 @@ function Stop-PoST-Service {
 
     try {
         $retryCount = 3
-        $retryInterval = 2500
+        $retryInterval = 2000
 
         for ($i = 0; $i -lt $retryCount; $i++) {
             if ($process.HasExited) {
@@ -486,7 +485,8 @@ function Run-AllInstances {
 
                 if (Check-InstanceState -instance $instance -instanceName $instanceName) {
                     $instancesInProvingState = $true
-                    Log-Message "PROVING state still found for '$instanceName'. Exiting the loop." "INFO"
+                    Log-Message "PROVING state still found for '$instanceName'." "WARN"
+					Show-WarningMessage "PROVING state still found for '$instanceName' You will need to start and run service manually. Or Check config and resetart script."
                     break
                 }
             }
@@ -506,7 +506,14 @@ function Run-AllInstances {
 }
 
 
-
+# Function to show a warning message in a new window
+function Show-WarningMessage {
+    param (
+        [string]$Message
+    )
+    Add-Type -AssemblyName PresentationFramework
+    [System.Windows.MessageBox]::Show($Message, "Warning", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning)
+}
 
 
 # Function to calculate the next trigger time based on the user's local time zone
@@ -553,7 +560,7 @@ function Update-ConsoleWithRemainingTime {
 
         if ($timeDifference.TotalSeconds -le 1) {
             Write-Host
-            Log-Message "Running POST Services" "INFO"
+            Log-Message "Cycle Gap Reached. Beginning Instances of POST Service" "INFO"
             break
         }
     }
