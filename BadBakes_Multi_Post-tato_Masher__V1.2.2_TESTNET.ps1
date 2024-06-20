@@ -19,10 +19,10 @@ $logFilePath = Join-Path -Path $logDirectory -ChildPath $logFileName
 .DESCRIPTION
     This script runs different instances of the PoST Proving "service.exe" sequentially, waits for each to complete before starting the next, and handles Cycle Gap timing.
 .NOTES
-    File Name: BadBakes_Multi_Post-tato_Masher__V1.2_TESTNET.ps1
+    File Name: BadBakes_Multi_Post-tato_Masher__V1.2.2_TESTNET.ps1
     Author: badbake
-    Version: 1.2
-    Last Updated: 2024-06-13
+    Version: 1.2.2
+    Last Updated: 2024-06-20
 #>
 
 # Function to log messages with timestamp and log level
@@ -158,7 +158,7 @@ function Run-Instance {
     if ($serviceProcess -ne $null -and (Get-Process -Id $serviceProcess.Id -ErrorAction Inquire)) {
         Log-Message "$instanceName has started service.exe" "INFO"
     } else {
-        Log-Message "$instanceName failed to start PoST-Service.exe" "ERROR"
+        Log-Message "$instanceName failed to start service.exe" "ERROR"
         return $null
     }
 
@@ -276,13 +276,13 @@ function Curl-ProvingProgress {
 				$passNumber = $end / $nonces
 
                 if ($end -eq 0) {
-                    Log-Message "Post-Service is warming up..." "INFO"
+                    Log-Message "PoST-Service is warming up..." "INFO"
                 } elseif ($end -eq $nonces -and $k2powStarted -eq $false) {
-                    Log-Message "Post-Service has started k2pow." "INFO"
+                    Log-Message "PoST-Service has started k2pow." "INFO"
 					$k2powStarted = $true
 					$passcountTicker++
                 } elseif ($passNumber -gt $passcountTicker -and $k2powStarted -eq $true) {
-                    Log-Message "Post-Service has started k2pow pass number: $passNumber" "INFO"
+                    Log-Message "PoST-Service has started k2pow pass number: $passNumber" "INFO"
 					$passcountTicker++
 					$k2powMorePasses = $true
                 } elseif ($k2powMorePasses -eq $true) {
@@ -306,12 +306,12 @@ function Curl-ProvingProgress {
                         Log-Message "Proving Post_Data Read: Progress $($progressPercentage)%" "INFO"
 					}
                 } else {
-                    Log-Message "Post-Service has returned an error." "WARN"
+                    Log-Message "PoST-Service has returned an error." "WARN"
                 }
 
                 Start-Sleep -Seconds $provingCheckInterval
             } else {
-                Log-Message "Post-Service has returned an error." "WARN"
+                Log-Message "PoST-Service has returned an error." "WARN"
                 return $null
             }
         } catch {
@@ -380,7 +380,7 @@ function Clear-ServiceLogFiles {
     }
 }
 
-# Function to initiate a graceful shutdown of the process
+# Function to initiate shutdown of the process
 function Stop-PoST-Service {
     param (
         [System.Diagnostics.Process]$process
@@ -567,7 +567,7 @@ function Update-ConsoleWithRemainingTime {
 
         if ($timeDifference.TotalSeconds -le 1) {
             Write-Host
-            Log-Message "Cycle Gap Reached. Beginning Instances of POST Service" "INFO"
+            Log-Message "Cycle Gap Reached. Beginning Instances of PoST-Service" "INFO"
             break
         }
     }
@@ -604,7 +604,7 @@ function Check-And-Run-ProvingInstances {
     
     # If no instances requiring proof were found, log a message before proceeding with the timer
     if (-not $provingInstancesFound) {
-        Log-Message "No PoST Services found requiring proof, proceeding with timer..." "INFO"
+        Log-Message "No PoST-Services found requiring proof, proceeding with timer..." "INFO"
     }
 	
     if ($clearServiceLogFiles) {
