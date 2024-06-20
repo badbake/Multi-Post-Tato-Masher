@@ -156,7 +156,7 @@ function Run-Instance {
     $serviceProcess = Start-Process -FilePath ".\service.exe" -ArgumentList $arguments -NoNewWindow -PassThru -RedirectStandardError $serviceLogFilePath
 
     if ($serviceProcess -ne $null -and (Get-Process -Id $serviceProcess.Id -ErrorAction Inquire)) {
-        Log-Message "$instanceName has successfully started PoST-Service.exe" "INFO"
+        Log-Message "$instanceName has started service.exe" "INFO"
     } else {
         Log-Message "$instanceName failed to start PoST-Service.exe" "ERROR"
         return $null
@@ -207,7 +207,7 @@ function Run-Instance {
             $previousState = "PROVING"
             $idleCounter = 0
 		} elseif ($provingFound -and $previousState -eq "PROVING" -and $shutdownInitiated -eq $true) {
-			Log-Message "Node still returning PROVING for '$instanceName'. An Error has occurred. Check Masher_Config for ${instanceName}." "WARN"
+			Log-Message "Node still returning PROVING for '$instanceName'. Check Masher_Config for ${instanceName}." "WARN"
 			Stop-PoST-Service -process $serviceProcess
 			return
         } elseif ($idleFound -and $previousState -eq "PROVING" -and $shutdownInitiated -eq $true) {
@@ -219,7 +219,7 @@ function Run-Instance {
             Curl-ProvingProgress -operatorAddress $operatorAddress -numUnits $numUnits -arguments $arguments
             $shutdownInitiated = $true
 			$ProofEndTime = Get-Date
-            Log-Message "PoST-Service '$instanceName' has completed PROVING. Checking Node..." "INFO"
+            Log-Message "PoST-Service: '$instanceName' Checking Node..." "INFO"
         } elseif ($idleFound -and $previousState -ne "IDLE" -and -not $provingStateReached) {
             Log-Message "PoST-Service '$instanceName' is in the IDLE state." "INFO"
             $previousState = "IDLE"
@@ -306,12 +306,12 @@ function Curl-ProvingProgress {
                         Log-Message "Proving Post_Data Read: Progress $($progressPercentage)%" "INFO"
 					}
                 } else {
-                    Log-Message "Unexpected JSON structure: Response = $($response) JsonResponse = $($jsonResponse) " "WARN"
+                    Log-Message "Post-Service has returned an error." "WARN"
                 }
 
                 Start-Sleep -Seconds $provingCheckInterval
             } else {
-                Log-Message "Unexpected JSON structure: Response = $($response) JsonResponse = $($jsonResponse) " "WARN"
+                Log-Message "Post-Service has returned an error." "WARN"
                 return $null
             }
         } catch {
@@ -486,7 +486,7 @@ function Run-AllInstances {
                 if (Check-InstanceState -instance $instance -instanceName $instanceName) {
                     $instancesInProvingState = $true
                     Log-Message "PROVING state still found for '$instanceName'." "WARN"
-					Show-WarningMessage "PROVING state still found for '$instanceName' You will need to start and run service manually. Or Check config and resetart script."
+					Show-WarningMessage "PROVING state still found for ${instanceName} Start and run service manually/Check Masher_Config for ${instanceName} and restart script."
                     break
                 }
             }
