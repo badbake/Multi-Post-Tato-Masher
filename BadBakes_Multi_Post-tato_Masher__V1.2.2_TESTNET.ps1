@@ -506,13 +506,20 @@ function Run-AllInstances {
 }
 
 
-# Function to show a warning message in a new window
+# Function to show a warning message in a new window without blocking script execution
 function Show-WarningMessage {
     param (
         [string]$Message
     )
+    
     Add-Type -AssemblyName PresentationFramework
-    [System.Windows.MessageBox]::Show($Message, "Warning", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning)
+
+    # Use a background job to display the message box
+    Start-Job -ScriptBlock {
+        param ($msg)
+        Add-Type -AssemblyName PresentationFramework
+        [System.Windows.MessageBox]::Show($msg, "Warning", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning)
+    } -ArgumentList $Message | Out-Null
 }
 
 
