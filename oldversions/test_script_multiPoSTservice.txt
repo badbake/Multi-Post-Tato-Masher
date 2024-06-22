@@ -1,0 +1,107 @@
+# Define the expected responses for grpcurl
+$provingResponse = "PROVING"
+$idleResponse = "IDLE"
+
+# Define a function to run an instance
+function RunInstance {
+    param (
+        [string]$instanceName,
+        [string[]]$arguments,
+        [string]$grpcUrlCommand,
+        [string]$provingResponse,
+        [string]$idleResponse
+    )
+
+    # Start the service.exe process with the current set of arguments and name
+    $serviceProcess = Start-Process -FilePath ".\service.exe" -ArgumentList $arguments -NoNewWindow -PassThru -Name $instanceName
+
+    # Flag to track whether the instance has entered the "PROVING" state
+    $provingStateReached = $false
+
+    do {
+        # Use the specific grpcurl.exe command to check the status of service.exe
+        $response = & $grpcUrlCommand
+
+        # Check if response indicates service is in the "PROVING" state
+        if ($response -like "*$provingResponse*") {
+            Write-Host "Instance '$instanceName' is in the PROVING state."
+            $provingStateReached = $true
+            return  # Exit the loop and continue with the instance
+        }
+
+        # Check if response indicates service is in the "IDLE" state
+        if ($response -like "*$idleResponse*" -and $provingStateReached -eq $false) {
+            Write-Host "Instance '$instanceName' is in the IDLE state."
+        }
+        elseif ($response -like "*$idleResponse*" -and $provingStateReached -eq $true) {
+            Write-Host "Instance '$instanceName' is in the IDLE state. Stopping service."
+            # Stop the service.exe process
+            Stop-Process -Name $instanceName
+            return  # Exit the function
+        }
+
+        # Sleep for a short duration before the next attempt (optional)
+        Start-Sleep -Seconds 5  # Adjust the duration as needed
+
+    } while ($true)  # Infinite loop
+}
+
+# Define a function to run all instances sequentially
+function RunAllInstances {
+    # Define a hashtable of instances with names, arguments, and grpcurl.exe commands
+    $instances = @{
+        "Instance1" = @{
+            Arguments = @("/arg1 value1", "/arg2 value2")
+            GrpcUrlCommand = ".\grpcurl.exe -plaintext -d '{}' localhost:50051 my.package.Service/CheckStatus"
+        }
+        "Instance2" = @{
+            Arguments = @("/arg3 value3", "/arg4 value4")
+            GrpcUrlCommand = ".\grpcurl.exe -plaintext -d '{}' localhost:50052 my.package.Service/CheckStatus"
+        }
+        "Instance3" = @{
+            Arguments = @("/arg5 value5", "/arg6 value6")
+            GrpcUrlCommand = ".\grpcurl.exe -plaintext -d '{}' localhost:50053 my.package.Service/CheckStatus"
+        }
+        # Add more instances with names, arguments, and grpcurl.exe commands as needed
+    }
+
+    # Loop through the instances
+    foreach ($instanceName in $instances.Keys) {
+        $instance = $instances[$instanceName]
+        $arguments = $instance.Arguments
+        $grpcUrlCommand = $instance.GrpcUrlCommand
+
+        # Call RunInstance function for each instance
+        RunInstance -instanceName $instanceName -arguments $arguments -grpcUrlCommand $grpcUrlCommand -provingResponse $provingResponse -idleResponse $idleResponse
+    }
+
+    # Output a message indicating that all instances have completed
+    Write-Host "All instances have completed."
+}
+
+# Define a function to wait for the trigger command
+function WaitForTrigger {
+    # Specify the initial date and time to trigger the execution
+    $triggerDateTime = Get-Date "2024-06-01 00:00:00"
+
+    # Calculate the time difference between the current date and time and the trigger date and time
+    $timeDifference = New-TimeSpan -Start (Get-Date) -End $triggerDateTime
+
+    # If the trigger date and time is in the past, adjust it to the next occurrence two weeks from now
+    if ($timeDifference -lt [TimeSpan]::Zero) {
+        $timeDifference = $timeDifference.Add([TimeSpan]::FromDays(14))
+    }
+
+    # Wait for the calculated time difference
+    Start-Sleep -Seconds $timeDifference.TotalSeconds
+
+    # Trigger the script to run all instances
+    while ($true) {
+        RunAllInstances
+        # Wait for two weeks before running the instances again
+        Start-Sleep -Seconds (2 * 7 * 24 * 60 * 60)  # 2 weeks
+    }
+}
+
+# Trigger the script to wait for the trigger command
+WaitForTrigger
