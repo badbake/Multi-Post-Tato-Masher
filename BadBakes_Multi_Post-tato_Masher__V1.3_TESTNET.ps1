@@ -19,10 +19,10 @@ $logFilePath = Join-Path -Path $logDirectory -ChildPath $logFileName
 .DESCRIPTION
     This script runs different instances of the PoST Proving "service.exe" sequentially, waits for each to complete before starting the next, and handles Cycle Gap timing.
 .NOTES
-    File Name: BadBakes_Multi_Post-tato_Masher__V1.2_TESTNET.ps1
+    File Name: BadBakes_Multi_Post-tato_Masher__V1.3_TESTNET.ps1
     Author: badbake
-    Version: 1.2
-    Last Updated: 2024-06-13
+    Version: 1.3
+    Last Updated: 2024-06-20
 #>
 
 # Function to log messages with timestamp and log level
@@ -156,9 +156,9 @@ function Run-Instance {
     $serviceProcess = Start-Process -FilePath ".\service.exe" -ArgumentList $arguments -NoNewWindow -PassThru -RedirectStandardError $serviceLogFilePath
 
     if ($serviceProcess -ne $null -and (Get-Process -Id $serviceProcess.Id -ErrorAction Inquire)) {
-        Log-Message "$instanceName has successfully started PoST-Service." "INFO"
+        Log-Message "$instanceName has started service.exe" "INFO"
     } else {
-        Log-Message "$instanceName failed to start PoST-Service." "ERROR"
+        Log-Message "$instanceName failed to start service.exe" "ERROR"
         return $null
     }
 
@@ -190,31 +190,36 @@ function Run-Instance {
                 Log-Message "'$instanceName' matched in the response." "DEBUG"
                 if ($state.state -eq "PROVING") {
                     $provingFound = $true
+					$idleFound = $false
                     Log-Message "Proving found for '$instanceName'." "DEBUG"
                 } elseif ($state.state -eq "IDLE") {
                     $idleFound = $true
+					$provingFound = $false
                     Log-Message "Idle found for '$instanceName'." "DEBUG"
                 }
             }
         }
 
         if ($provingFound -and $previousState -ne "PROVING") {
-            Log-Message "PoST-Service '$instanceName' is PROVING." "INFO"
+            Log-Message "PoST-Service '$instanceName' is beginning proof." "INFO"
             $provingStateReached = $true
 			$ProofStartTime = Get-Date
             $previousState = "PROVING"
             $idleCounter = 0
-        } elseif ($shutdownInitiated -eq $true) {
-            Log-Message "Node returning idle for '$instanceName'. Proof is assumed accepted" "INFO"
+		} elseif ($provingFound -and $previousState -eq "PROVING" -and $shutdownInitiated -eq $true) {
+			Log-Message "Node still returning PROVING for '$instanceName'. Check Masher_Config for ${instanceName}." "WARN"
+			Stop-PoST-Service -process $serviceProcess
+			return
+        } elseif ($idleFound -and $previousState -eq "PROVING" -and $shutdownInitiated -eq $true) {
+            Log-Message "Node returning idle for '$instanceName'. Proof is assumed accepted by Node." "INFO"
             Stop-PoST-Service -process $serviceProcess
-			# Call CalculateProvingTime at the end of Run-Instance
-			CalculateProvingTime -ProofStartTime $ProofStartTime -ProofEndTime $ProofEndTime -instanceName $instanceName				##FOR LATER IMPLEMENTATION##  ##started on 6-16##
+			CalculateProvingTime -ProofStartTime $ProofStartTime -ProofEndTime $ProofEndTime -instanceName $instanceName
             return
         } elseif ($provingFound -and $previousState -eq "PROVING") {
             Curl-ProvingProgress -operatorAddress $operatorAddress -numUnits $numUnits -arguments $arguments
             $shutdownInitiated = $true
 			$ProofEndTime = Get-Date
-            Log-Message "PoST-Service '$instanceName' has completed PROVING. Checking Node..." "INFO"
+            Log-Message "PoST-Service: '$instanceName' Checking Node..." "INFO"
         } elseif ($idleFound -and $previousState -ne "IDLE" -and -not $provingStateReached) {
             Log-Message "PoST-Service '$instanceName' is in the IDLE state." "INFO"
             $previousState = "IDLE"
@@ -271,19 +276,19 @@ function Curl-ProvingProgress {
 				$passNumber = $end / $nonces
 
                 if ($end -eq 0) {
-                    Log-Message "Post-Service is starting k2pow" "INFO"
+                    Log-Message "PoST-Service is warming up..." "INFO"
                 } elseif ($end -eq $nonces -and $k2powStarted -eq $false) {
-                    Log-Message "Post-Service has started k2pow" "INFO"
+                    Log-Message "PoST-Service has started k2pow." "INFO"
 					$k2powStarted = $true
 					$passcountTicker++
                 } elseif ($passNumber -gt $passcountTicker -and $k2powStarted -eq $true) {
-                    Log-Message "Post-Service has started k2pow pass number: $passNumber" "INFO"
+                    Log-Message "PoST-Service has started k2pow pass number: $passNumber" "INFO"
 					$passcountTicker++
 					$k2powMorePasses = $true
                 } elseif ($k2powMorePasses -eq $true) {
                     # Existing logic to handle position-based progress
                     if ($position -eq 0) {							##Setting to 0 for testnet but use math for mainnet (($numUnits * 68719476736) * ($passNumber - 1))
-                        Log-Message "Proving is in Stage 1. Pass $passNumber" "INFO"
+                        Log-Message "Proving is in Pass ${passNumber}, Stage 1." "INFO"
                     } elseif ($position -gt 0) {					##Setting to 0 for testnet but use math for mainnet (($numUnits * 68719476736) * ($passNumber - 1))
                         ##$progressPercentage = [math]::Round(($position / (($numUnits * 68719476736) * ($passNumber - 1))) * 100, 0) #mainNet 
                         $progressPercentage = [math]::Round(($position / (($numUnits * 16384) * ($passNumber - 1))) * 100, 0) #testNet
@@ -301,12 +306,12 @@ function Curl-ProvingProgress {
                         Log-Message "Proving Post_Data Read: Progress $($progressPercentage)%" "INFO"
 					}
                 } else {
-                    Log-Message "Unexpected JSON structure: Response = $($response) JsonResponse = $($jsonResponse) " "WARN"
+                    Log-Message "PoST-Service has returned an error." "WARN"
                 }
 
                 Start-Sleep -Seconds $provingCheckInterval
             } else {
-                Log-Message "Unexpected JSON structure: Response = $($response) JsonResponse = $($jsonResponse) " "WARN"
+                Log-Message "PoST-Service has returned an error." "WARN"
                 return $null
             }
         } catch {
@@ -375,7 +380,7 @@ function Clear-ServiceLogFiles {
     }
 }
 
-# Function to initiate a graceful shutdown of the process
+# Function to initiate shutdown of the process
 function Stop-PoST-Service {
     param (
         [System.Diagnostics.Process]$process
@@ -383,7 +388,7 @@ function Stop-PoST-Service {
 
     try {
         $retryCount = 3
-        $retryInterval = 2500
+        $retryInterval = 2000
 
         for ($i = 0; $i -lt $retryCount; $i++) {
             if ($process.HasExited) {
@@ -458,22 +463,42 @@ function Run-AllInstances {
     $instancesInProvingState = $false
     Log-Message "All Instances Ran. Re-Checking all Instances for PROVING state." "INFO"
     
-    foreach ($instanceName in $instances.Keys) {
-        $instance = $instances[$instanceName]
-        Log-Message "Checking State of '$instanceName'." "DEBUG"
+    try {
+        foreach ($instanceName in $instances.Keys) {
+            $instance = $instances[$instanceName]
+            Log-Message "Checking State of '$instanceName'." "DEBUG"
 
-        if (Check-InstanceState -instance $instance -instanceName $instanceName) {
-            $instancesInProvingState = $true
-            Log-Message "PROVING state found. Running PoST-Service for '$instanceName'." "INFO"
-            Run-Instance -instanceName $instanceName -arguments $instance.Arguments
+            if (Check-InstanceState -instance $instance -instanceName $instanceName) {
+                $instancesInProvingState = $true
+                Log-Message "PROVING state found. Running PoST-Service for '$instanceName'." "INFO"
+                Run-Instance -instanceName $instanceName -arguments $instance.Arguments
+            }
         }
-    }
 
-    if (-not $instancesInProvingState) {
-        Log-Message "All PoST-Service's showing IDLE." "INFO"
-        Log-Message "All PoST-Service's have completed proving." "INFO"
-    }
+        if ($instancesInProvingState) {
+            $instancesInProvingState = $false
+            Log-Message "Re-checking instances after running PoST-Service." "INFO"
 
+            foreach ($instanceName in $instances.Keys) {
+                $instance = $instances[$instanceName]
+                Log-Message "Checking State of '$instanceName'." "DEBUG"
+
+                if (Check-InstanceState -instance $instance -instanceName $instanceName) {
+                    $instancesInProvingState = $true
+                    Log-Message "PROVING state still found for '$instanceName'." "WARN"
+					Show-WarningMessage "PROVING state still found for ${instanceName} Start and run service manually/Check Masher_Config for ${instanceName} and restart script."
+                    break
+                }
+            }
+        }
+
+        if (-not $instancesInProvingState) {
+            Log-Message "All PoST-Service's showing IDLE." "INFO"
+            Log-Message "All PoST-Service's have completed proving." "INFO"
+        }
+    } catch {
+        Log-Message "An error occurred: $_" "ERROR"
+    }
 
     if ($clearServiceLogFiles) {
         Clear-ServiceLogFiles -logDirectory $logDirectory -instances $instances.Keys
@@ -481,6 +506,21 @@ function Run-AllInstances {
 }
 
 
+# Function to show a warning message in a new window without blocking script execution
+function Show-WarningMessage {
+    param (
+        [string]$Message
+    )
+    
+    Add-Type -AssemblyName PresentationFramework
+
+    # Use a background job to display the message box
+    Start-Job -ScriptBlock {
+        param ($msg)
+        Add-Type -AssemblyName PresentationFramework
+        [System.Windows.MessageBox]::Show($msg, "Warning", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning)
+    } -ArgumentList $Message | Out-Null
+}
 
 
 # Function to calculate the next trigger time based on the user's local time zone
@@ -527,7 +567,7 @@ function Update-ConsoleWithRemainingTime {
 
         if ($timeDifference.TotalSeconds -le 1) {
             Write-Host
-            Log-Message "Running POST Services" "INFO"
+            Log-Message "Cycle Gap Reached. Beginning Instances of PoST-Service" "INFO"
             break
         }
     }
@@ -564,7 +604,7 @@ function Check-And-Run-ProvingInstances {
     
     # If no instances requiring proof were found, log a message before proceeding with the timer
     if (-not $provingInstancesFound) {
-        Log-Message "No PoST Services found requiring proof, proceeding with timer..." "INFO"
+        Log-Message "No PoST-Services found requiring proof, proceeding with timer..." "INFO"
     }
 	
     if ($clearServiceLogFiles) {
