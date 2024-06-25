@@ -10,12 +10,12 @@
 #Define location of grpcurl.exe. Default is directory script is ran from.
 $grpcurl = ".\grpcurl.exe"
 
-# Define log levels for console and logfile (set to INFO by default, can be set to DEBUG, WARN, ERROR)
+# Define log levels for console and logfile (set to INFO by default, can be set to DEBUG, INFO, WARN, ERROR)
 $ConsoleLogLevel = "INFO"
-$FileLogLevel = "DEBUG"
+$FileLogLevel = "INFO"
 
 # Set Interval in seconds for Checking Post Service Status while running.
-$provingCheckInterval = 30
+$provingCheckInterval = 60
 
 # Define the variable to clear service log files
 $clearServiceLogFiles = $true
@@ -53,76 +53,7 @@ $instances = @{
             "--randomx-mode=fast"
         )
     }
-    "Post4" = @{									
-        Arguments = @(
-            "--address=http://localhost:9094",
-            "--dir=./Post4",						
-            "--operator-address=127.0.0.1:50054",
-            "--threads=1",
-            "--nonces=64",
-            "--randomx-mode=fast"
-        )
-    }
-    "Post5" = @{									
-        Arguments = @(
-            "--address=http://localhost:9094",
-            "--dir=./Post5",						
-            "--operator-address=127.0.0.1:50055",
-            "--threads=1",
-            "--nonces=64",
-            "--randomx-mode=fast"
-        )
-    }
-    "Post6" = @{									
-        Arguments = @(
-            "--address=http://localhost:9094",
-            "--dir=./Post6",						
-            "--operator-address=127.0.0.1:50056",
-            "--threads=1",
-            "--nonces=64",
-            "--randomx-mode=fast"
-        )
-    }
-    "Post7" = @{									
-        Arguments = @(
-            "--address=http://localhost:9094",
-            "--dir=./Post7",						
-            "--operator-address=127.0.0.1:50057",
-            "--threads=1",
-            "--nonces=64",
-            "--randomx-mode=fast"
-        )
-    }
-    "Post8" = @{									
-        Arguments = @(
-            "--address=http://localhost:9094",
-            "--dir=./Post8",						
-            "--operator-address=127.0.0.1:50058",
-            "--threads=1",
-            "--nonces=64",
-            "--randomx-mode=fast"
-        )
-    }
-    "Post9" = @{									
-        Arguments = @(
-            "--address=http://localhost:9094",
-            "--dir=./Post9",						
-            "--operator-address=127.0.0.1:50059",
-            "--threads=1",
-            "--nonces=64",
-            "--randomx-mode=fast"
-        )
-    }
-    "Post10" = @{									
-        Arguments = @(
-            "--address=http://localhost:9094",
-            "--dir=./Post10",						
-            "--operator-address=127.0.0.1:50060",
-            "--threads=1",
-            "--nonces=64",
-            "--randomx-mode=fast"
-        )
-    }
+
 
     # Add/Remove Posts with names and arguments for all Post Services needed.
 }
