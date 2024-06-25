@@ -1,3 +1,15 @@
+<#
+.SYNOPSIS
+    Script for orchestrating multiple PoST Proving service instances, sequentially, based on cycle gap timing.
+.DESCRIPTION
+    This script runs different instances of the PoST Proving "service.exe" sequentially, waits for each to complete before starting the next, and handles Cycle Gap timing.
+.NOTES
+    File Name: BadBakes_Multi_Post-tato_Masher__V1.3_MainNet.ps1
+    Author: badbake
+    Version: 1.3
+#>
+
+
 # Set the window title and load configuration settings
 $WindowTitle = "Multi Post-tato Masher MainNet"
 $host.ui.RawUI.WindowTitle = $WindowTitle
@@ -11,19 +23,6 @@ if (-not (Test-Path -Path $logDirectory)) {
 $logFileName = "PostMasher$((Get-Date).ToString('MMddyyyy_HHmm')).txt"
 $logFilePath = Join-Path -Path $logDirectory -ChildPath $logFileName
 
-
-
-<#
-.SYNOPSIS
-    Script for orchestrating multiple PoST Proving service instances, sequentially, based on cycle gap timing.
-.DESCRIPTION
-    This script runs different instances of the PoST Proving "service.exe" sequentially, waits for each to complete before starting the next, and handles Cycle Gap timing.
-.NOTES
-    File Name: BadBakes_Multi_Post-tato_Masher__V1.3_MainNet.ps1
-    Author: badbake
-    Version: 1.3
-    Last Updated: 2024-06-20
-#>
 
 # Function to log messages with timestamp and log level
 function Log-Message {
@@ -227,7 +226,7 @@ function Run-Instance {
         } elseif ($idleFound -and $previousState -eq "IDLE") {
             $idleCounter++
             Log-Message "PoST-Service '$instanceName' continues to be in the IDLE state. Idle count: $idleCounter" "INFO"
-            if ($idleCounter -ge 4) {
+            if ($idleCounter -ge 10) {
                 $shutdownInitiated = $true
                 Log-Message "PoST-Service '$instanceName' idle state detected $idleCounter times. Initiating shutdown." "INFO"
                 Stop-PoST-Service -process $serviceProcess
