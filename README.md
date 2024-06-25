@@ -3,7 +3,7 @@
  
  Intended to be used alongside running go-spacemesh in a 1:N configuration.
  
- Allows for multiple post directorys to be used from one 'service.exe'
+ Allows for multiple post directorys to be used from one 'service.exe'<br>
  The script starts by calculating the next Cycle Gap, (by default using standard 12hr POET)
  It will then sleep until that time.
  The script will then start 'service.exe' with the user configured arguments, adjusted for each set of POST data.
