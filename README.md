@@ -5,7 +5,7 @@
  
  Allows for multiple post directorys to be used from one 'service.exe'
  The script starts by calculating the next Cycle Gap, (by default using standard 12hr POET)
- It will then sleep until 10 minutes(by defaul) before that time.
+ It will then sleep until that time.
  The script will then start 'service.exe' with the user configured arguments, adjusted for each set of POST data.
  It will then use 'grpcurl.exe' (source newest version yourself) to monitor the status of the proving, and upon confirmation of the node accepting the proof;
  The script will then end that instance of 'service.exe', waiting a short period to allow resources to realease;
