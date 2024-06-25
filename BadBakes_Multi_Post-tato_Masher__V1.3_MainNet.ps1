@@ -290,7 +290,6 @@ function Curl-ProvingProgress {
                         Log-Message "Proving is in Pass ${passNumber}, Stage 1." "INFO"
                     } elseif ($position -gt (($numUnits * 68719476736) * ($passNumber - 1))) {					
                         $progressPercentage = [math]::Round(($position / (($numUnits * 68719476736) * ($passNumber - 1))) * 100, 0) #mainNet 
-                        #$progressPercentage = [math]::Round(($position / (($numUnits * 16384) * ($passNumber - 1))) * 100, 0) #testNet
                         Log-Message "Math Result: ( $($position) / $($numUnits) ) x 100 = $($progressPercentage) /Pass $passNumber" "DEBUG"
                         Log-Message "Proving Post_Data Read: Progress $($progressPercentage)% /Pass $passNumber" "INFO"
 					}
@@ -300,7 +299,6 @@ function Curl-ProvingProgress {
                         Log-Message "Proving is in Stage 1." "INFO"
                     } elseif ($position -gt (($numUnits * 68719476736) * ($passNumber - 1))) {
                         $progressPercentage = [math]::Round(($position / ($numUnits * 68719476736)) * 100, 0) #mainNet 
-                        #$progressPercentage = [math]::Round(($position / ($numUnits * 16384)) * 100, 0) #testNet
                         Log-Message "Math Result: ( $($position) / $($numUnits) ) x 100 = $($progressPercentage)" "DEBUG"
                         Log-Message "Proving Post_Data Read: Progress $($progressPercentage)%" "INFO"
 					}
@@ -524,7 +522,6 @@ function Show-WarningMessage {
 
 # Function to calculate the next trigger time based on the user's local time zone
 function Calculate-NextTriggerTime {
-    #$initialTriggerDateTimeUtc = [DateTime]::new(2024, 6, 6, 23, 00, 0) #testnet12
 	$initialTriggerDateTimeUtc = [DateTime]::new(2024, 5, 12, 20, 00, 0) #mainnet
     $initialTriggerDateTimeLocal = $initialTriggerDateTimeUtc.ToLocalTime()
     $currentDateTimeLocal = Get-Date
@@ -532,11 +529,9 @@ function Calculate-NextTriggerTime {
     if ($currentDateTimeLocal -gt $initialTriggerDateTimeLocal) {
         $timeDifference = $currentDateTimeLocal - $initialTriggerDateTimeLocal
         # Calculate the number of full 1-day intervals that have passed
-        #$fullIntervals = [Math]::Floor($timeDifference.TotalDays) #testnet12
-		$fullIntervals = [Math]::Floor($timeDifference.TotalDays / 14) #mainnet
+	$fullIntervals = [Math]::Floor($timeDifference.TotalDays / 14) #mainnet
         # Calculate the next trigger time by adding the necessary number of 1-day intervals to the initial trigger time
-        #$nextTriggerDateTimeLocal = $initialTriggerDateTimeLocal.AddDays($fullIntervals + 1) #testnet12
-		$nextTriggerDateTimeLocal = $initialTriggerDateTimeLocal.AddDays(($fullIntervals + 1) * 14) #mainnet
+	$nextTriggerDateTimeLocal = $initialTriggerDateTimeLocal.AddDays(($fullIntervals + 1) * 14) #mainnet
     } else {
         $nextTriggerDateTimeLocal = $initialTriggerDateTimeLocal
     }
