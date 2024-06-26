@@ -12,7 +12,9 @@
  Then move onto the next set of Post Data and arguments for 'service.exe';
  Running untill all instances have finished;
  It will then calculate the time to the next default POET 12HR Cycle Gap start time;
- And sleep until 10 minutes before (by default), when it will start the cycle again.
+ And sleep until the next Cycle Gap, when it will start the process again.
+
+ The script should display all information in the users local time zone. 
 
 ## Setup
  Suggest getting and editing using Notepad++ but can be edited with whatever text editor you use.
