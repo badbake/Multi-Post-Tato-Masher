@@ -24,7 +24,8 @@
  3) (OPTIONAL) You can also set the log level displayed both on the console and also in the output log file. You can also choose to save the service.exe log files if you choose. Also you can adjust the interval at which the script checks the node/proving.
   ![optional](https://github.com/badbake/Multi-Post-Tato-Masher/blob/5ccafc4f182d8d753dadb7eda4a3c598d3347160/readme_content/optional.png)
  5) Ensure you have enabled script execution permisions for remote scripts. Unblock/Unlock both .ps1 files. Node must be running (there is no logic yet for checking this, it is built assuming node is running)
- 6) Run 'BadBakes_Multi_Post-tato_Masher__V*_MainNet.ps1'
+ 6) In 'Masher_Config' also ensure location of grpcurl is correct for you file structure setup.
+ 7) Run 'BadBakes_Multi_Post-tato_Masher__V*_MainNet.ps1'
 
 ## Running
  1) If properly configured it should check to see if any of the post data sets you configured in Step 2 return "PROVING" from the node, if they do (new data set or script started during CG) it will run those instances of that POST data set.
