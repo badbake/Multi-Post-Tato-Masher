@@ -17,7 +17,7 @@ $FileLogLevel = "INFO"
 # Set Interval in seconds for Checking Post Service Status while running.
 $provingCheckInterval = 60
 
-# Define the variable to clear service log files
+# Define the variable to clear service log files (set to $false to keep service log files)
 $clearServiceLogFiles = $true
 
 
