@@ -10,12 +10,10 @@
 #>
 
 
-# Set the window title and load configuration settings
 $WindowTitle = "Multi Post-tato Masher MainNet"
 $host.ui.RawUI.WindowTitle = $WindowTitle
 . ".\Masher_Config.ps1"
 
-# Ensure log directory exists and initialize log file path
 $logDirectory = ".\Logs"
 if (-not (Test-Path -Path $logDirectory)) {
     New-Item -ItemType Directory -Path $logDirectory
@@ -126,9 +124,8 @@ function Run-Instance {
 
     $dirArgument = ($arguments -like "--dir=*")[0]
     $instanceDir = $dirArgument.Split("=")[1]
-	
-	#Log Message to display which 'Post' Instance is starting.
-	Log-Message "Starting Instance for $instanceName" "INFO"
+    
+    Log-Message "Starting Instance for $instanceName" "INFO"
 	
     $numUnits = GetNumUnitsForInstance -instanceDir $instanceDir
 
@@ -245,7 +242,6 @@ function Curl-ProvingProgress {
         [string[]]$arguments
     )
 
-    # Extract the --nonces value from the arguments
     $noncesArgument = ($arguments -like "--nonces=*")[0]
     $nonces = [int]($noncesArgument.Split("=")[1])
 	
@@ -254,7 +250,7 @@ function Curl-ProvingProgress {
 	$passcountTicker = 0
 
     while ($true) {
-        # Send request to operator address
+
         $response = Invoke-Expression ("curl http://$operatorAddress/status") 2>$null -ErrorAction Inquire
         Log-Message "Response: $($response)" "DEBUG"
 
@@ -285,7 +281,6 @@ function Curl-ProvingProgress {
 					$passcountTicker++
 					$k2powMorePasses = $true
                 } elseif ($k2powMorePasses -eq $true) {
-                    # Existing logic to handle position-based progress
                     if ($position -eq (($numUnits * 68719476736) * ($passNumber - 1))) {							
                         Log-Message "Proving is in Pass ${passNumber}, Stage 1." "INFO"
                     } elseif ($position -gt (($numUnits * 68719476736) * ($passNumber - 1))) {					
@@ -294,7 +289,6 @@ function Curl-ProvingProgress {
                         Log-Message "Proving Post_Data Read: Progress $($progressPercentage)% /Pass $passNumber" "INFO"
 					}
                 } elseif ($k2powStarted -eq $true -and $k2powMorePasses -eq $false) {
-                    # Existing logic to handle position-based progress
                     if ($position -eq (($numUnits * 68719476736) * ($passNumber - 1))) {
                         Log-Message "Proving is in Stage 1." "INFO"
                     } elseif ($position -gt (($numUnits * 68719476736) * ($passNumber - 1))) {
@@ -483,7 +477,7 @@ function Run-AllInstances {
                 if (Check-InstanceState -instance $instance -instanceName $instanceName) {
                     $instancesInProvingState = $true
                     Log-Message "PROVING state still found for '$instanceName'." "WARN"
-					Show-WarningMessage "PROVING state still found for ${instanceName} Start and run service manually/Check Masher_Config for ${instanceName} and restart script."
+		    Show-WarningMessage "PROVING state still found for ${instanceName} Start and run service manually/Check Masher_Config for ${instanceName} and restart script."
                     break
                 }
             }
@@ -511,7 +505,6 @@ function Show-WarningMessage {
     
     Add-Type -AssemblyName PresentationFramework
 
-    # Use a background job to display the message box
     Start-Job -ScriptBlock {
         param ($msg)
         Add-Type -AssemblyName PresentationFramework
@@ -528,9 +521,7 @@ function Calculate-NextTriggerTime {
 
     if ($currentDateTimeLocal -gt $initialTriggerDateTimeLocal) {
         $timeDifference = $currentDateTimeLocal - $initialTriggerDateTimeLocal
-        # Calculate the number of full 1-day intervals that have passed
 	$fullIntervals = [Math]::Floor($timeDifference.TotalDays / 14) #mainnet
-        # Calculate the next trigger time by adding the necessary number of 1-day intervals to the initial trigger time
 	$nextTriggerDateTimeLocal = $initialTriggerDateTimeLocal.AddDays(($fullIntervals + 1) * 14) #mainnet
     } else {
         $nextTriggerDateTimeLocal = $initialTriggerDateTimeLocal
