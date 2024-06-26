@@ -28,7 +28,7 @@ $instances = @{
             "--address=http://localhost:9094",		#Node's gRPC address. Ensure it matches the node's grpc-post-listener config option.
             "--dir=./Post1",						#Post Data Directory, Set for each different set of Post Data.
             "--operator-address=127.0.0.1:50051",	#Operator API
-            "--threads=1",							#Proving Options based on your hardware
+            "--threads=1",							#Proving Options based on your hardware (Can be --threads or --pinned-cores, one or the other)
             "--nonces=64",							#Proving Options based on your hardware
             "--randomx-mode=fast"					#Proving Options based on your hardware
         )
