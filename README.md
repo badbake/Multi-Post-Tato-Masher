@@ -20,7 +20,7 @@
  Suggest getting and editing using Notepad++ but can be edited with whatever text editor you use.
 
  1) Open 'Masher_Config.ps1' in a text editor.
-  ![Masher_Config](https://github.com/badbake/Multi-Post-Tato-Masher/blob/04d433cd8a5553f1c99d168296919dde4502ebad/readme_content/masher_config.png)
+  ![Masher_Config](https://github.com/badbake/Multi-Post-Tato-Masher/blob/7aa70c90b84600bb9f934af74dc0d2ff917a903b/readme_content/masher_config.png)
  2) Change all Post Data settings to match your particular use case. Add/Remove Post Services as needed. For example, my 1:N setup.
   ![my_1N_masher_config](https://github.com/badbake/Multi-Post-Tato-Masher/blob/0f70d42c452c118ac428d06217cb6a29b3c9a792/readme_content/my_1N_masher_config.png)
  3) (OPTIONAL) You can also set the log level displayed both on the console and also in the output log file. You can also choose to save the service.exe log files if you choose. Also you can adjust the interval at which the script checks the node/proving.
