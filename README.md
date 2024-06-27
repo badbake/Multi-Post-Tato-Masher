@@ -24,7 +24,7 @@
  2) Change all Post Data settings to match your particular use case. Add/Remove Post Services as needed. For example, my 1:N setup.
   ![my_1N_masher_config](https://github.com/badbake/Multi-Post-Tato-Masher/blob/0f70d42c452c118ac428d06217cb6a29b3c9a792/readme_content/my_1N_masher_config.png)
  3) (OPTIONAL) You can also set the log level displayed both on the console and also in the output log file. You can also choose to save the service.exe log files if you choose. Also you can adjust the interval at which the script checks the node/proving.
-  ![optional](https://github.com/badbake/Multi-Post-Tato-Masher/blob/5ccafc4f182d8d753dadb7eda4a3c598d3347160/readme_content/optional.png)
+  ![optional](https://github.com/badbake/Multi-Post-Tato-Masher/blob/623d47c7c96759fe7eb31c0978bd6405315df3b5/readme_content/optional.png)
  5) Ensure you have enabled script execution permisions for remote scripts. Unblock/Unlock both .ps1 files. Node must be running (there is no logic yet for checking this, it is built assuming node is running)
  6) In 'Masher_Config' also ensure location of grpcurl is correct for you file structure setup.
  7) Run 'BadBakes_Multi_Post-tato_Masher__V*_MainNet.ps1'
