@@ -34,6 +34,8 @@
  2) Otherwise if none are found requiring a proof, it will calculate the time to the next Cycle Gap and display the time and date and remaining time until.
    ![running](https://github.com/badbake/Multi-Post-Tato-Masher/blob/3c72942f65ad28db33a48479876e091291507b9c/readme_content/running.png)
  4) Once the Cycle Gap is reached, the script will start and run each set of Post data set in Masher_Config, 1 at a time, allowing each to complete proving and it being accepted by the node.
- 5) Once it confirms the node has accepted the proof, it will close that instance of service.exe and move onto the next set of Post Data. Until all have completed.
- 6) Once all have been ran, the next cycle gap is calculated and the cycle repeats.
+ 5) During Proving, It will display if the proof is in k2pow stage or Post Data Read %, if multiple passes are required it will display that as well.
+   ![proving](https://github.com/badbake/Multi-Post-Tato-Masher/blob/6723569be620d84dc85ba65a172f78441c10daea/readme_content/proving.png)
+ 6) Once it confirms the node has accepted the proof, it will close that instance of service.exe and move onto the next set of Post Data. Until all have completed.
+ 7) Once all have been ran, the next cycle gap is calculated and the cycle repeats.
 
