@@ -16,6 +16,16 @@
 
  The script should display all information in the users local time zone. 
 
+## Motivation
+ I originally came up with the idea for making this script when I saw that the 26 SU plot on my miniPC finished in just a couple hours,<br>
+ so in theory I could handle proving a lot more data in the 12 hour cycle gap.<br><br>
+ So I wanted to maximize what my miniPC could prove, but I couldnt expand its internal NvMe drive any more than it currently is, nor can I increase it's 16gb of ram.<br><br>
+ So with these limiting factors in mind, I decided that going with a 1:N setup with multiple sets of POST Data was my best option...<br>
+ BUT having only 16 gb of RAM, my miniPC would not be able to handle running multiple versions of service.exe at a time.<br><br>
+ So my solution was creating this, <b>Badbake's Multi-Post-Tato-Masher</b>! 
+
+ So if you are like me and are trying to do a LOT with a little! This script might be for you!
+
 ## Setup
  Suggest getting and editing using Notepad++ but can be edited with whatever text editor you use.
 
