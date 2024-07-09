@@ -26,8 +26,13 @@
 
  So if you are like me and are trying to do a LOT with a little! This script might be for you!
 
+Please Take Note: I built this for my personal use. I tried to make it a user-friendly type script that I could share with others that might need it. As such I just want to state I am not responsible for your usage of this script if you choose to use it yourself.
+
 ## Setup
- Suggest getting and editing using Notepad++ but can be edited with whatever text editor you use.
+
+ Download/Git both the Masher_config.ps1 and the current version of the Multi-Post-Tato-Masher. Place both in Node directory with service.exe in same location. (could vary based on your setup, more advanced users will need to tweak some stuff.)
+
+Suggest getting and editing using Notepad++ but can be edited with whatever text editor you use.
 
  1) Open 'Masher_Config.ps1' in a text editor.
   ![Masher_Config](https://github.com/badbake/Multi-Post-Tato-Masher/blob/7aa70c90b84600bb9f934af74dc0d2ff917a903b/readme_content/masher_config.png)
