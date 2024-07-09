@@ -7,7 +7,7 @@
     File Name: Masher_Config.ps1
 #>
 #Choose Preset POET Cycle Gap. Set to 0 for Default12Hr Poet. Set to 1 for Team24Standard. Set to 2 for Team24Early. Set to 3 for Testnet13.
-$triggerDatePreset = 1
+$triggerDatePreset = 0
 
 #Define location of grpcurl.exe. Default is directory script is ran from.
 $grpcurl = ".\grpcurl.exe"
