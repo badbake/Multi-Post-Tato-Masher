@@ -540,12 +540,35 @@ function Show-WarningMessage {
     } -ArgumentList $Message | Out-Null
 }
 
+# Function to check Masher_Config for which Trigger Date Preset
+function TriggerDateCheck {
+    param (
+        [int]$triggerDatePreset
+    )
+    
+    switch ($triggerDatePreset) {
+        0 { return [DateTime]::new(2024, 5, 12, 20, 00, 0) } # Default12hr
+        1 { return [DateTime]::new(2024, 7, 09, 08, 00, 0) } # Team24Standard
+        2 { return [DateTime]::new(2024, 7, 16, 08, 00, 0) } # Team24Early
+        3 { return [DateTime]::new(2024, 6, 6, 23, 00, 0) } # testnet
+        default { 
+            Log-Message "There was a problem getting trigger date" "ERROR"
+            return $null
+        }
+    }
+}
 
 # Function to calculate the next trigger time based on the user's local time zone
 function Calculate-NextTriggerTime {
-    #$initialTriggerDateTimeUtc = [DateTime]::new(2024, 6, 6, 23, 00, 0) #testnet12
-	#$initialTriggerDateTimeUtc = [DateTime]::new(2024, 5, 12, 20, 00, 0) #mainnet
-	$initialTriggerDateTimeUtc = [DateTime]::new(2024, 7, 09, 08, 00, 0) #Team24Standard
+    param (
+        [int]$triggerDatePreset
+    )
+
+    $initialTriggerDateTimeUtc = TriggerDateCheck -triggerDatePreset $triggerDatePreset
+    if ($null -eq $initialTriggerDateTimeUtc) {
+        return
+    }
+	
     $initialTriggerDateTimeLocal = $initialTriggerDateTimeUtc.ToLocalTime()
     $currentDateTimeLocal = Get-Date
 
