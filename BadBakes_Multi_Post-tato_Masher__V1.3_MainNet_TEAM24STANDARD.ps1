@@ -544,8 +544,8 @@ function Show-WarningMessage {
 # Function to calculate the next trigger time based on the user's local time zone
 function Calculate-NextTriggerTime {
     #$initialTriggerDateTimeUtc = [DateTime]::new(2024, 6, 6, 23, 00, 0) #testnet12
-	$initialTriggerDateTimeUtc = [DateTime]::new(2024, 5, 12, 20, 00, 0) #mainnet
-	#$initialTriggerDateTimeUtc = [DateTime]::new(2024, 7, 09, 08, 00, 0) #Team24Standard
+	#$initialTriggerDateTimeUtc = [DateTime]::new(2024, 5, 12, 20, 00, 0) #mainnet
+	$initialTriggerDateTimeUtc = [DateTime]::new(2024, 7, 09, 08, 00, 0) #Team24Standard
     $initialTriggerDateTimeLocal = $initialTriggerDateTimeUtc.ToLocalTime()
     $currentDateTimeLocal = Get-Date
 
