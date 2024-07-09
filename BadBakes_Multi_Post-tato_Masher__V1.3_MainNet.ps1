@@ -10,10 +10,31 @@
 #>
 
 
+# Set the window title and load configuration settings
 $WindowTitle = "Multi Post-tato Masher MainNet"
 $host.ui.RawUI.WindowTitle = $WindowTitle
-. ".\Masher_Config.ps1"
+    
+	# Import Configs
+    $settingsFile = ".\Masher_Config.ps1"
+    if (Test-Path $settingsFile) {
+        . $settingsFile
+    }
+    else {
+        Write-Host "Error: Masher_Config.ps1 not found." -ForegroundColor Red
+        Write-Host "Press any key to continue ..."
+        $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        exit
+    }
+	if ($IsWindows) {
+    	if (!(Test-Path $grpcurl)) {
+        	Write-Host "Error: grpcurl not found." -ForegroundColor Red
+        	Write-Host "Press any key to continue ..."
+        	$null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        	exit  
+    	}
+	} 
 
+# Ensure log directory exists and initialize log file path
 $logDirectory = ".\Logs"
 if (-not (Test-Path -Path $logDirectory)) {
     New-Item -ItemType Directory -Path $logDirectory
@@ -124,8 +145,9 @@ function Run-Instance {
 
     $dirArgument = ($arguments -like "--dir=*")[0]
     $instanceDir = $dirArgument.Split("=")[1]
-    
-    Log-Message "Starting Instance for $instanceName" "INFO"
+	
+	#Log Message to display which 'Post' Instance is starting.
+	Log-Message "Starting Instance for $instanceName" "INFO"
 	
     $numUnits = GetNumUnitsForInstance -instanceDir $instanceDir
 
@@ -242,6 +264,7 @@ function Curl-ProvingProgress {
         [string[]]$arguments
     )
 
+    # Extract the --nonces value from the arguments
     $noncesArgument = ($arguments -like "--nonces=*")[0]
     $nonces = [int]($noncesArgument.Split("=")[1])
 	
@@ -250,7 +273,7 @@ function Curl-ProvingProgress {
 	$passcountTicker = 0
 
     while ($true) {
-
+        # Send request to operator address
         $response = Invoke-Expression ("curl http://$operatorAddress/status") 2>$null -ErrorAction Inquire
         Log-Message "Response: $($response)" "DEBUG"
 
@@ -281,18 +304,22 @@ function Curl-ProvingProgress {
 					$passcountTicker++
 					$k2powMorePasses = $true
                 } elseif ($k2powMorePasses -eq $true) {
+                    # Existing logic to handle position-based progress
                     if ($position -eq (($numUnits * 68719476736) * ($passNumber - 1))) {							
                         Log-Message "Proving is in Pass ${passNumber}, Stage 1." "INFO"
                     } elseif ($position -gt (($numUnits * 68719476736) * ($passNumber - 1))) {					
                         $progressPercentage = [math]::Round(($position / (($numUnits * 68719476736) * ($passNumber - 1))) * 100, 0) #mainNet 
+                        #$progressPercentage = [math]::Round(($position / (($numUnits * 16384) * ($passNumber - 1))) * 100, 0) #testNet
                         Log-Message "Math Result: ( $($position) / $($numUnits) ) x 100 = $($progressPercentage) /Pass $passNumber" "DEBUG"
                         Log-Message "Proving Post_Data Read: Progress $($progressPercentage)% /Pass $passNumber" "INFO"
 					}
                 } elseif ($k2powStarted -eq $true -and $k2powMorePasses -eq $false) {
+                    # Existing logic to handle position-based progress
                     if ($position -eq (($numUnits * 68719476736) * ($passNumber - 1))) {
                         Log-Message "Proving is in Stage 1." "INFO"
                     } elseif ($position -gt (($numUnits * 68719476736) * ($passNumber - 1))) {
                         $progressPercentage = [math]::Round(($position / ($numUnits * 68719476736)) * 100, 0) #mainNet 
+                        #$progressPercentage = [math]::Round(($position / ($numUnits * 16384)) * 100, 0) #testNet
                         Log-Message "Math Result: ( $($position) / $($numUnits) ) x 100 = $($progressPercentage)" "DEBUG"
                         Log-Message "Proving Post_Data Read: Progress $($progressPercentage)%" "INFO"
 					}
@@ -477,7 +504,7 @@ function Run-AllInstances {
                 if (Check-InstanceState -instance $instance -instanceName $instanceName) {
                     $instancesInProvingState = $true
                     Log-Message "PROVING state still found for '$instanceName'." "WARN"
-		    Show-WarningMessage "PROVING state still found for ${instanceName} Start and run service manually/Check Masher_Config for ${instanceName} and restart script."
+					Show-WarningMessage "PROVING state still found for ${instanceName} Start and run service manually/Check Masher_Config for ${instanceName} and restart script."
                     break
                 }
             }
@@ -505,6 +532,7 @@ function Show-WarningMessage {
     
     Add-Type -AssemblyName PresentationFramework
 
+    # Use a background job to display the message box
     Start-Job -ScriptBlock {
         param ($msg)
         Add-Type -AssemblyName PresentationFramework
@@ -515,14 +543,20 @@ function Show-WarningMessage {
 
 # Function to calculate the next trigger time based on the user's local time zone
 function Calculate-NextTriggerTime {
-	$initialTriggerDateTimeUtc = [DateTime]::new(2024, 5, 12, 20, 00, 0) #mainnet
+    #$initialTriggerDateTimeUtc = [DateTime]::new(2024, 6, 6, 23, 00, 0) #testnet12
+	#$initialTriggerDateTimeUtc = [DateTime]::new(2024, 5, 12, 20, 00, 0) #mainnet
+	$initialTriggerDateTimeUtc = [DateTime]::new(2024, 7, 09, 08, 00, 0) #Team24Standard
     $initialTriggerDateTimeLocal = $initialTriggerDateTimeUtc.ToLocalTime()
     $currentDateTimeLocal = Get-Date
 
     if ($currentDateTimeLocal -gt $initialTriggerDateTimeLocal) {
         $timeDifference = $currentDateTimeLocal - $initialTriggerDateTimeLocal
-	$fullIntervals = [Math]::Floor($timeDifference.TotalDays / 14) #mainnet
-	$nextTriggerDateTimeLocal = $initialTriggerDateTimeLocal.AddDays(($fullIntervals + 1) * 14) #mainnet
+        # Calculate the number of full 1-day intervals that have passed
+        #$fullIntervals = [Math]::Floor($timeDifference.TotalDays) #testnet12
+		$fullIntervals = [Math]::Floor($timeDifference.TotalDays / 14) #mainnet
+        # Calculate the next trigger time by adding the necessary number of 1-day intervals to the initial trigger time
+        #$nextTriggerDateTimeLocal = $initialTriggerDateTimeLocal.AddDays($fullIntervals + 1) #testnet12
+		$nextTriggerDateTimeLocal = $initialTriggerDateTimeLocal.AddDays(($fullIntervals + 1) * 14) #mainnet
     } else {
         $nextTriggerDateTimeLocal = $initialTriggerDateTimeLocal
     }
