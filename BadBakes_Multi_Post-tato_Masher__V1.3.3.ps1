@@ -635,28 +635,54 @@ function Wait-ForTrigger {
 
 # Function to check for PROVING states and run corresponding instances
 function Check-And-Run-ProvingInstances {
-    $provingInstancesFound = $false
-    
-    foreach ($instanceName in $instances.Keys) {
-        $instance = $instances[$instanceName]
-        Log-Message "Checking State of '$instanceName'." "INFO"
+    # Sort the instance names to ensure they are processed in the same order every time
+    $sortedInstanceNames = $instances.Keys | Sort-Object
 
-        if (Check-InstanceState -instance $instance -instanceName $instanceName) {
-            $provingInstancesFound = $true
-            Log-Message "PROVING state found. Running PoST-Service for '$instanceName'." "INFO"
-            Run-Instance -instanceName $instanceName -arguments $instance.Arguments
+    $instancesInProvingState = $false
+    Log-Message "Checking Instances for PROVING state." "INFO"
+
+    try {
+        foreach ($instanceName in $sortedInstanceNames) {
+            $instance = $instances[$instanceName]
+            Log-Message "Checking State of '$instanceName'." "DEBUG"
+
+            if (Check-InstanceState -instance $instance -instanceName $instanceName) {
+                $instancesInProvingState = $true
+                Log-Message "PROVING state found. Running PoST-Service for '$instanceName'." "INFO"
+                Run-Instance -instanceName $instanceName -arguments $instance.Arguments
+            }
         }
+
+        if ($instancesInProvingState) {
+            $instancesInProvingState = $false
+            Log-Message "Re-checking instances after running PoST-Service." "INFO"
+
+            foreach ($instanceName in $sortedInstanceNames) {
+                $instance = $instances[$instanceName]
+                Log-Message "Checking State of '$instanceName'." "DEBUG"
+
+                if (Check-InstanceState -instance $instance -instanceName $instanceName) {
+                    $instancesInProvingState = $true
+                    Log-Message "PROVING state still found for '$instanceName'." "WARN"
+                    Show-WarningMessage "PROVING state still found for ${instanceName} Start and run service manually/Check Masher_Config for ${instanceName} and restart script."
+                    break
+                }
+            }
+        }
+
+        if (-not $instancesInProvingState) {
+            Log-Message "All PoST-Service's showing IDLE." "INFO"
+            Log-Message "All PoST-Service's have completed proving." "INFO"
+        }
+    } catch {
+        Log-Message "An error occurred: $_" "ERROR"
     }
-    
-    # If no instances requiring proof were found, log a message before proceeding with the timer
-    if (-not $provingInstancesFound) {
-        Log-Message "No PoST-Services found requiring proof, proceeding with timer..." "INFO"
-    }
-	
+
     if ($clearServiceLogFiles) {
         Clear-ServiceLogFiles -logDirectory $logDirectory -instances $instances.Keys
     }
 }
+
 
 # Main entry point
 Check-And-Run-ProvingInstances
