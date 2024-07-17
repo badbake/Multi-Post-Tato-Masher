@@ -550,16 +550,33 @@ function TriggerDateCheck {
         [int]$triggerDatePreset
     )
     
-    switch ($triggerDatePreset) {
-        0 { return [DateTime]::new(2024, 5, 12, 20, 00, 0) } # Default12hr
-        1 { return [DateTime]::new(2024, 7, 09, 08, 00, 0) } # Team24Standard
-        2 { return [DateTime]::new(2024, 7, 16, 08, 00, 0) } # Team24Early
-        3 { return [DateTime]::new(2024, 6, 6, 23, 00, 0) } # testnet
+    Log-Message "Entering TriggerDateCheck with preset: $triggerDateSetting" "DEBUG"
+
+    $triggerDate = switch ($triggerDateSetting) {
+        0 { 
+            Log-Message "Preset 0 selected: Default12hr" "DEBUG"
+            [DateTime]::new(2024, 5, 12, 20, 00, 0) 
+        }
+        1 { 
+            Log-Message "Preset 1 selected: Team24Standard" "DEBUG"
+            [DateTime]::new(2024, 7, 09, 08, 00, 0) 
+        }
+        2 { 
+            Log-Message "Preset 2 selected: Team24Early" "DEBUG"
+            [DateTime]::new(2024, 7, 16, 08, 00, 0) 
+        }
+        3 { 
+            Log-Message "Preset 3 selected: Testnet" "DEBUG"
+            [DateTime]::new(2024, 6, 6, 23, 00, 0) 
+        }
         default { 
-            Log-Message "There was a problem getting trigger date" "ERROR"
+            Log-Message "Invalid preset: $triggerDateSetting" "ERROR"
             return $null
         }
     }
+
+    Log-Message "Exiting TriggerDateCheck with trigger date: $triggerDate" "DEBUG"
+    return $triggerDate
 }
 
 # Function to calculate the next trigger time based on the user's local time zone
