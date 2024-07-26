@@ -64,12 +64,12 @@ function Colorize-Logs {
         }
         "WARN" {
             $timestampColor = "DarkBlue"
-            $levelColor = "Yellow"
+            $levelColor = "DarkYellow"
             $messageColor = "Gray"
         }
         "DEBUG" {
             $timestampColor = "DarkBlue"
-            $levelColor = "DarkYellow"
+            $levelColor = "Yellow"
             $messageColor = "Gray"
         }
         "ERROR" {
