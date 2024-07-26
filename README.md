@@ -37,7 +37,7 @@ Please Take Note: I built this for my personal use. I tried to make it a user-fr
 Suggest getting and editing using Notepad++ but can be edited with whatever text editor you use.
 
  1) Open 'Masher_Config.ps1' in a text editor.
-  ![Masher_Config](https://github.com/badbake/Multi-Post-Tato-Masher/blob/7aa70c90b84600bb9f934af74dc0d2ff917a903b/readme_content/masher_config.png)
+  ![Masher_Config](readme_content/masher_config.png)
  2) Set which POET Cycle you want used. 0 for Default12HR is set by default
   ![PoetPreset](https://github.com/badbake/Multi-Post-Tato-Masher/blob/c7ef6892557bc8f5d3c2353bb01e9b0b319b3775/readme_content/poet_preset.png)
  3) Change all Post Data settings to match your particular use case. Add/Remove Post Services as needed. For example, my 1:N setup.
@@ -45,8 +45,8 @@ Suggest getting and editing using Notepad++ but can be edited with whatever text
  4) (OPTIONAL) You can also set the log level displayed both on the console and also in the output log file. You can also choose to save the service.exe log files if you choose. Also you can adjust the interval at which the script checks the node/proving.
   ![optional](https://github.com/badbake/Multi-Post-Tato-Masher/blob/623d47c7c96759fe7eb31c0978bd6405315df3b5/readme_content/optional.png)
  5) Ensure you have enabled script execution permisions for remote scripts. Unblock/Unlock both .ps1 files. Node must be running (there is no logic yet for checking this, it is built assuming node is running)
- 6) In 'Masher_Config' Make sure location of grpcurl.exe and the PostService executable (service.exe/PostService.exe) is correctly set for your file structure setup.
-  ![locations](https://github.com/badbake/Multi-Post-Tato-Masher/blob/427d2fe8e87e505219acf5a2f821b55b604cd4d4/readme_content/locations.png)
+ 6) In 'Masher_Config' Make sure location of grpcurl.exe and the PostService executable (service.exe/PostService.exe) is correctly set for your file structure setup.<br>
+![locations](https://github.com/badbake/Multi-Post-Tato-Masher/blob/427d2fe8e87e505219acf5a2f821b55b604cd4d4/readme_content/locations.png)
  7) Run 'BadBakes_Multi_Post-tato_Masher__V*_MainNet.ps1'
 
 ## Running
