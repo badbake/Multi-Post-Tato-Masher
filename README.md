@@ -30,7 +30,9 @@ Please Take Note: I built this for my personal use. I tried to make it a user-fr
 
 ## Setup
 
- Download/Git both the Masher_config.ps1 and the current version of the Multi-Post-Tato-Masher. Place both in Node directory with service.exe in same location. (could vary based on your setup, more advanced users will need to tweak some stuff.)
+ Download/Git both the Masher_Config.ps1 and the most recent version of the Multi-Post-Tato-Masher.<br>
+ Place both files in Node directory. (could vary based on your setup, more advanced users will need to tweak some stuff.)<br>
+ 
 
 Suggest getting and editing using Notepad++ but can be edited with whatever text editor you use.
 
@@ -43,7 +45,8 @@ Suggest getting and editing using Notepad++ but can be edited with whatever text
  4) (OPTIONAL) You can also set the log level displayed both on the console and also in the output log file. You can also choose to save the service.exe log files if you choose. Also you can adjust the interval at which the script checks the node/proving.
   ![optional](https://github.com/badbake/Multi-Post-Tato-Masher/blob/623d47c7c96759fe7eb31c0978bd6405315df3b5/readme_content/optional.png)
  5) Ensure you have enabled script execution permisions for remote scripts. Unblock/Unlock both .ps1 files. Node must be running (there is no logic yet for checking this, it is built assuming node is running)
- 6) In 'Masher_Config' also ensure location of grpcurl is correct for you file structure setup.
+ 6) In 'Masher_Config' Make sure location of grpcurl.exe and the PostService executable (service.exe/PostService.exe) is correctly set for your file structure setup.
+  ![locations](https://github.com/badbake/Multi-Post-Tato-Masher/blob/623d47c7c96759fe7eb31c0978bd6405315df3b5/readme_content/locations.png)
  7) Run 'BadBakes_Multi_Post-tato_Masher__V*_MainNet.ps1'
 
 ## Running
