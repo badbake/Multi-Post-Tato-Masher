@@ -10,7 +10,7 @@
 #>
 
 
-# Set the window title and load configuration settings
+# Set the window title
 $WindowTitle = "Multi Post-tato Masher MainNet"
 $host.ui.RawUI.WindowTitle = $WindowTitle
 
@@ -73,7 +73,7 @@ function Colorize-Logs {
             $messageColor = "Gray"
         }
         "ERROR" {
-            $timestampColor = "Red"
+            $timestampColor = "DarkBlue"
             $levelColor = "DarkRed"
             $messageColor = "Red"
         }
@@ -109,7 +109,7 @@ $settingsFile = ".\Masher_Config.ps1"
         exit  
     }
 	if (!(Test-Path $service)) {
-        Log-Message "PostService not found." "ERROR"
+        Log-Message "(PoST)Service.exe not found." "ERROR"
         Log-Message "Please check Permissions and Configuration. Press any key to exit." "WARN"
         $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
         exit  
