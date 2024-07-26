@@ -46,7 +46,7 @@ Suggest getting and editing using Notepad++ but can be edited with whatever text
   ![optional](https://github.com/badbake/Multi-Post-Tato-Masher/blob/623d47c7c96759fe7eb31c0978bd6405315df3b5/readme_content/optional.png)
  5) Ensure you have enabled script execution permisions for remote scripts. Unblock/Unlock both .ps1 files. Node must be running (there is no logic yet for checking this, it is built assuming node is running)
  6) In 'Masher_Config' Make sure location of grpcurl.exe and the PostService executable (service.exe/PostService.exe) is correctly set for your file structure setup.
-  ![locations](https://github.com/badbake/Multi-Post-Tato-Masher/blob/623d47c7c96759fe7eb31c0978bd6405315df3b5/readme_content/locations.png)
+  ![locations](https://github.com/badbake/Multi-Post-Tato-Masher/blob/427d2fe8e87e505219acf5a2f821b55b604cd4d4/readme_content/locations.png)
  7) Run 'BadBakes_Multi_Post-tato_Masher__V*_MainNet.ps1'
 
 ## Running
