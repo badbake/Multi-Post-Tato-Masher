@@ -97,20 +97,20 @@ $settingsFile = ".\Masher_Config.ps1"
         . $settingsFile
     }
     else {
-        Log-Message "Error: Masher_Config.ps1 not found." "ERROR"
-        Log-Message "Please check Configuration. Press any key to exit." "WARN"
+        Log-Message "Masher_Config.ps1 not found." "ERROR"
+        Log-Message "Please check Permissions and Configuration. Press any key to exit." "WARN"
         $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
         exit
     }
     if (!(Test-Path $grpcurl)) {
-        Log-Message "Error: grpcurl not found." "ERROR"
-        Log-Message "Please check Configuration. Press any key to exit." "WARN"
+        Log-Message "grpcurl.exe not found." "ERROR"
+        Log-Message "Please check Permissions and Configuration. Press any key to exit." "WARN"
         $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
         exit  
     }
 	if (!(Test-Path $service)) {
-        Log-Message "Error: PostService not found." "ERROR"
-        Log-Message "Please check Configuration. Press any key to exit." "WARN"
+        Log-Message "PostService not found." "ERROR"
+        Log-Message "Please check Permissions and Configuration. Press any key to exit." "WARN"
         $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
         exit  
     }
