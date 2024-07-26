@@ -13,31 +13,6 @@
 # Set the window title and load configuration settings
 $WindowTitle = "Multi Post-tato Masher MainNet"
 $host.ui.RawUI.WindowTitle = $WindowTitle
-    
-	# Import Configs
-    $settingsFile = ".\Masher_Config.ps1"
-    if (Test-Path $settingsFile) {
-        . $settingsFile
-    }
-    else {
-        Write-Host "Error: Masher_Config.ps1 not found." -ForegroundColor Red
-        Write-Host "Press any key to continue ..."
-        $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-        exit
-    }
-    if (!(Test-Path $grpcurl)) {
-        Write-Host "Error: grpcurl not found." -ForegroundColor Red
-        Write-Host "Press any key to continue ..."
-        $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-        exit  
-    }
-	if (!(Test-Path $service)) {
-        Write-Host "Error: PostService not found." -ForegroundColor Red
-        Write-Host "Press any key to continue ..."
-        $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-        exit  
-    }
-
 
 # Ensure log directory exists and initialize log file path
 $logDirectory = ".\Logs"
@@ -72,8 +47,7 @@ function Log-Message {
         Colorize-Logs -message $message -level $level -timestamp $timestamp
     }
 }
-
-
+ 
 # Function to display colorized logs in the console
 function Colorize-Logs {
     param (
@@ -116,6 +90,31 @@ function Colorize-Logs {
     Write-Host -NoNewline " - "
     Write-Host -ForegroundColor $messageColor $message
 }
+   
+# Import Configs
+$settingsFile = ".\Masher_Config.ps1"
+    if (Test-Path $settingsFile) {
+        . $settingsFile
+    }
+    else {
+        Log-Message "Error: Masher_Config.ps1 not found." "ERROR"
+        Log-Message "Please check Configuration. Press any key to exit." "WARN"
+        $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        exit
+    }
+    if (!(Test-Path $grpcurl)) {
+        Log-Message "Error: grpcurl not found." "ERROR"
+        Log-Message "Please check Configuration. Press any key to exit." "WARN"
+        $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        exit  
+    }
+	if (!(Test-Path $service)) {
+        Log-Message "Error: PostService not found." "ERROR"
+        Log-Message "Please check Configuration. Press any key to exit." "WARN"
+        $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        exit  
+    }
+
 
 # Function to get # of SU's from postdata_metadata.json
 function GetNumUnitsForInstance {
