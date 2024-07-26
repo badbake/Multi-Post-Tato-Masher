@@ -7,8 +7,9 @@
     File Name: Masher_Config.ps1
 #>
 
-#Define location of grpcurl.exe. Default is directory script is ran from.
+#Define location of grpcurl.exe and PostService Executable. Default is directory script is ran from.
 $grpcurl = ".\grpcurl.exe"
+$service = ".\service.exe"
 
 # Define log levels for console and logfile (set to INFO by default, can be set to DEBUG, INFO, WARN, ERROR)
 $ConsoleLogLevel = "INFO"
