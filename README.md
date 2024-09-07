@@ -1,3 +1,6 @@
+# USE AT OWN RISK. NOT IN ACTIVE DEVELOPMENT AND HAS ISSUES. I WILL NOT HELP SETUP OR TROUBLESHOOT
+
+
 # Multi_Post_Tato_Masher
  Script for running multiple versions of Post service.exe
  
